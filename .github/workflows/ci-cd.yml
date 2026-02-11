@@ -25,7 +25,7 @@ jobs:
           cache: 'maven'  # Автоматическое кэширование зависимостей Maven
       
       # 3. СТАДИЯ: Сборка проекта
-      - name: 🏗️ Стадия: Сборка (Build)
+      - name: Стадия: Сборка (Build)
         id: build
         run: |
           echo "=== Начало сборки проекта ==="
@@ -35,7 +35,7 @@ jobs:
           MAVEN_OPTS: "-Dfile.encoding=UTF-8"
       
       # 4. СТАДИЯ: Демонстрация работы
-      - name: 🎮 Стадия: Демонстрация (Demo)
+      - name: Стадия: Демонстрация (Demo)
         id: demo
         run: |
           echo "=== Запуск демонстрации RBAC ==="
@@ -50,8 +50,7 @@ jobs:
           MAVEN_OPTS: "-Dfile.encoding=UTF-8"
           JAVA_TOOL_OPTIONS: "-Dfile.encoding=UTF-8"
       
-      # 5. Артефакт: сохранение лога демонстрации
-      - name: 💾 Сохранить лог демонстрации
+      - name: Сохранить лог демонстрации
         uses: actions/upload-artifact@v4
         if: always()
         with:
