@@ -26,23 +26,23 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
       
+      - name: Проверка версии Java
+        run: |
+          java -version
+          mvn -v
+      
       - name: Стадия Сборка
         id: build
-        run: |
-          echo "=== Начало сборки проекта ==="
-          mvn -B compile -Dfile.encoding=UTF-8
-          echo "=== Сборка успешно завершена ==="
+        run: mvn -B clean compile -Dfile.encoding=UTF-8
         env:
           MAVEN_OPTS: "-Dfile.encoding=UTF-8"
       
       - name: Стадия Демонстрация
         id: demo
         run: |
-          echo "=== Запуск демонстрации RBAC ==="
-          mvn -B exec:java -Dexec.mainClass="rbac.Main" -Dfile.encoding=UTF-8 2>&1 | tee demo-output.log || true
-          echo "=== Демонстрация завершена ==="
+          mvn -B exec:java -Dexec.mainClass="rbac.Main" -Dfile.encoding=UTF-8 2>&1 | tee demo-output.log || echo "Демонстрация завершена (возможны исключения при тестировании валидации)"
           echo ""
-          echo "Вывод демонстрации:"
+          echo "=== ВЫВОД ДЕМОНСТРАЦИИ ==="
           cat demo-output.log
         env:
           MAVEN_OPTS: "-Dfile.encoding=UTF-8"
