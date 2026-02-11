@@ -2,9 +2,13 @@ name: RBAC CI/CD Pipeline
 
 on:
   push:
-    branches: [ main, dev, 'feature/**' ]
+    branches:
+      - main
+      - dev
+      - 'feature/**'
   pull_request:
-    branches: [ dev ]
+    branches:
+      - dev
 
 jobs:
   build-and-demo:
@@ -12,39 +16,33 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-      # 1. Получение кода из репозитория
-      - name: 📥 Checkout кода
+      - name: Checkout кода
         uses: actions/checkout@v4
         
-      # 2. Настройка Java 17 и кэширование Maven
-      - name: ⚙️ Настройка Java 17
+      - name: Настройка Java 17
         uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
-          cache: 'maven'  # Автоматическое кэширование зависимостей Maven
+          cache: 'maven'
       
-      # 3. СТАДИЯ: Сборка проекта
-      - name: Стадия: Сборка (Build)
+      - name: Стадия Сборка
         id: build
         run: |
           echo "=== Начало сборки проекта ==="
-          mvn compile -Dfile.encoding=UTF-8 --batch-mode
+          mvn -B compile -Dfile.encoding=UTF-8
           echo "=== Сборка успешно завершена ==="
         env:
           MAVEN_OPTS: "-Dfile.encoding=UTF-8"
       
-      # 4. СТАДИЯ: Демонстрация работы
-      - name: Стадия: Демонстрация (Demo)
+      - name: Стадия Демонстрация
         id: demo
         run: |
           echo "=== Запуск демонстрации RBAC ==="
-          mvn exec:java -Dexec.mainClass="rbac.Main" -Dfile.encoding=UTF-8 --batch-mode 2>&1 | tee demo-output.log
+          mvn -B exec:java -Dexec.mainClass="rbac.Main" -Dfile.encoding=UTF-8 2>&1 | tee demo-output.log || true
           echo "=== Демонстрация завершена ==="
-          
-          # Показываем вывод с поддержкой кириллицы
           echo ""
-          echo "📋 Вывод демонстрации:"
+          echo "Вывод демонстрации:"
           cat demo-output.log
         env:
           MAVEN_OPTS: "-Dfile.encoding=UTF-8"
