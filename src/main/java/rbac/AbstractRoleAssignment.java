@@ -5,7 +5,6 @@ import java.util.UUID;
 
 /**
  * Абстрактный класс для реализации назначений ролей
- * Содержит общую логику для постоянных и временных назначений
  */
 public abstract class AbstractRoleAssignment implements RoleAssignment {
     private final String assignmentId;
@@ -13,9 +12,7 @@ public abstract class AbstractRoleAssignment implements RoleAssignment {
     private final Role role;
     private final AssignmentMetadata metadata;
 
-    /**
-     * Конструктор с валидацией параметров
-     */
+   
     public AbstractRoleAssignment(User user, Role role, AssignmentMetadata metadata) {
         if (user == null) throw new IllegalArgumentException("Пользователь не может быть null");
         if (role == null) throw new IllegalArgumentException("Роль не может быть null");
@@ -43,9 +40,7 @@ public abstract class AbstractRoleAssignment implements RoleAssignment {
         return Objects.hash(assignmentId);
     }
 
-    /**
-     * Краткое резюме назначения
-     */
+
     public String summary() {
         return String.format("[%s] Роль %s назначена пользователю %s администратором %s в %s\nПричина: %s\nСтатус: %s",
                 assignmentType(),

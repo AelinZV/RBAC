@@ -1,8 +1,5 @@
 package rbac;
 
-/**
- * Демонстрационный класс для тестирования базовых структур данных RBAC
- */
 public class Main {
     public static void main(String[] args) {
         System.out.println("=== Тест 1.1: Валидация пользователя ===");

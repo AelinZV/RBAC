@@ -1,14 +1,8 @@
 package rbac;
 
-/**
- * Запись права доступа с нормализацией данных
- */
 public record Permission(String name, String resource, String description) {
 
-    /**
-     * Канонический конструктор с валидацией и нормализацией
-     * ВАЖНО: присваиваем новые значения параметрам напрямую!
-     */
+    
     public Permission {
         if (name == null || name.trim().isEmpty()) {
             throw new IllegalArgumentException("Имя права доступа не может быть пустым или null");
