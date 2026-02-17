@@ -1,4 +1,4 @@
-# Убедитесь, что вы в правильной ветке
+# проверка ветки
 git checkout feature/filters
 git branch --show-current  # Должно быть: feature/filters
 
