@@ -34,21 +34,20 @@ jobs:
           echo "=== Структура проекта ==="
           find . -type f -name "*.java" | grep -E "(User|Role|Filter|Sorter)" | head -5
       
-      - name: 🏗️ Стадия: Сборка
+      - name: Стадия Сборка
         id: build
         run: mvn -B clean compile -Dfile.encoding=UTF-8
         env:
           MAVEN_OPTS: "-Dfile.encoding=UTF-8"
       
-      - name: Стадия: Тестирование
+      - name: Стадия Тестирование
         id: test
         run: mvn -B test -Dfile.encoding=UTF-8
         env:
           MAVEN_OPTS: "-Dfile.encoding=UTF-8"
-        # Продолжаем даже если тестов нет (для подзадачи 2)
-        continue-on-error: true
+        continue-on-error: true  # Продолжаем даже если тестов нет (для подзадачи 2)
       
-      - name: 🎮 Стадия: Демонстрация
+      - name: Стадия Демонстрация
         id: demo
         run: |
           echo "=== ЗАПУСК ДЕМОНСТРАЦИИ ==="
