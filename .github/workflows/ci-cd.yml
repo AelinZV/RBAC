@@ -11,8 +11,8 @@ on:
       - dev
 
 jobs:
-  build-and-demo:
-    name: Сборка и демонстрация RBAC
+  build-test-demo:
+    name: Сборка, тесты и демонстрация RBAC
     runs-on: ubuntu-latest
     
     steps:
@@ -26,24 +26,45 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
       
-      - name: Проверка версии Java
+      - name: Проверка версий
         run: |
+          echo "=== Версии инструментов ==="
           java -version
           mvn -v
+          echo "=== Структура проекта ==="
+          find . -type f -name "*.java" | grep -E "(User|Role|Filter|Sorter)" | head -5
       
-      - name: Стадия Сборка
+      - name: 🏗️ Стадия: Сборка
         id: build
         run: mvn -B clean compile -Dfile.encoding=UTF-8
         env:
           MAVEN_OPTS: "-Dfile.encoding=UTF-8"
       
-      - name: Стадия Демонстрация
+      - name: Стадия: Тестирование
+        id: test
+        run: mvn -B test -Dfile.encoding=UTF-8
+        env:
+          MAVEN_OPTS: "-Dfile.encoding=UTF-8"
+        # Продолжаем даже если тестов нет (для подзадачи 2)
+        continue-on-error: true
+      
+      - name: 🎮 Стадия: Демонстрация
         id: demo
         run: |
-          mvn -B exec:java -Dexec.mainClass="rbac.Main" -Dfile.encoding=UTF-8 2>&1 | tee demo-output.log || echo "Демонстрация завершена (возможны исключения при тестировании валидации)"
+          echo "=== ЗАПУСК ДЕМОНСТРАЦИИ ==="
+          mvn -B exec:java -Dexec.mainClass="rbac.Main" -Dfile.encoding=UTF-8 2>&1 | tee demo-output.log
+          EXIT_CODE=${PIPESTATUS[0]}
           echo ""
-          echo "=== ВЫВОД ДЕМОНСТРАЦИИ ==="
-          cat demo-output.log
+          echo "=== АНАЛИЗ ВЫВОДА ==="
+          if grep -q "ТЕСТ 2.4" demo-output.log; then
+            echo "✓ Обнаружены тесты фильтров и сортировки (подзадача 2)"
+          else
+            echo "! Вывод не содержит тестов подзадачи 2"
+          fi
+          echo ""
+          echo "=== ПОСЛЕДНИЕ 30 СТРОК ВЫВОДА ==="
+          tail -n 30 demo-output.log
+          exit $EXIT_CODE
         env:
           MAVEN_OPTS: "-Dfile.encoding=UTF-8"
           JAVA_TOOL_OPTIONS: "-Dfile.encoding=UTF-8"
@@ -52,6 +73,13 @@ jobs:
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: demo-output
+          name: demo-output-${{ github.sha }}
           path: demo-output.log
           retention-days: 7
+      
+      - name: Статистика артефактов
+        if: always()
+        run: |
+          echo "Размер лога: $(wc -c < demo-output.log) байт"
+          echo "Количество строк: $(wc -l < demo-output.log)"
+          echo "Статус демонстрации: ${{ steps.demo.outcome }}"

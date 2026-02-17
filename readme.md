@@ -1,49 +1,32 @@
-Лаба 1
+# Убедитесь, что вы в правильной ветке
+git checkout feature/filters
+git branch --show-current  # Должно быть: feature/filters
 
-# Создаём правильную структуру папок
-mkdir -p src/main/java/rbac
-
-# Коммит 0: Maven конфигурация
-git add pom.xml
-git commit -m "chore: добавить структуру Maven проекта"
-
-# Коммит 1: Пользователь
-git add src/main/java/rbac/User.java
-git commit -m "feat(bds): реализовать запись User с валидацией (1.1)"
-
-# Коммит 2: Права доступа
-git add src/main/java/rbac/Permission.java
-git commit -m "feat(bds): реализовать запись Permission с нормализацией (1.2)"
-
-# Коммит 3: Роль
-git add src/main/java/rbac/Role.java
-git commit -m "feat(bds): реализовать класс Role с управлением правами (1.3)"
-
-# Коммит 4: Метаданные
-git add src/main/java/rbac/AssignmentMetadata.java
-git commit -m "feat(bds): реализовать запись AssignmentMetadata (1.4)"
-
-# Коммит 5: Интерфейс назначения
+# === КОММИТ 1: Исправление интерфейса (требуется для компиляции) ===
 git add src/main/java/rbac/RoleAssignment.java
-git commit -m "feat(bds): определить интерфейс RoleAssignment (1.5)"
+git commit -m "fix(filters): add summary() method to RoleAssignment interface"
 
-# Коммит 6: Абстрактный класс
-git add src/main/java/rbac/AbstractRoleAssignment.java
-git commit -m "feat(bds): реализовать абстрактный класс AbstractRoleAssignment (1.6)"
+# === КОММИТ 2: Подпункт 2.1 — Фильтрация пользователей ===
+git add src/main/java/rbac/UserFilter.java
+git add src/main/java/rbac/UserFilters.java
+git commit -m "feat(filters): implement UserFilter interface and UserFilters factory methods (2.1)"
 
-# Коммит 7: Постоянное назначение
-git add src/main/java/rbac/PermanentAssignment.java
-git commit -m "feat(bds): реализовать класс PermanentAssignment (1.7)"
+# === КОММИТ 3: Подпункт 2.2 — Фильтрация ролей ===
+git add src/main/java/rbac/RoleFilter.java
+git add src/main/java/rbac/RoleFilters.java
+git commit -m "feat(filters): implement RoleFilter interface and RoleFilters factory methods (2.2)"
 
-# Коммит 8: Временное назначение
-git add src/main/java/rbac/TemporaryAssignment.java
-git commit -m "feat(bds): реализовать класс TemporaryAssignment (1.8)"
+# === КОММИТ 4: Подпункт 2.3 — Фильтрация назначений ===
+git add src/main/java/rbac/AssignmentFilter.java
+git add src/main/java/rbac/AssignmentFilters.java
+git commit -m "feat(filters): implement AssignmentFilter interface and AssignmentFilters factory methods (2.3)"
 
-# Коммит 9: Демонстрация
+# === КОММИТ 5: Подпункт 2.4 — Сортировка ===
+git add src/main/java/rbac/UserSorters.java
+git add src/main/java/rbac/RoleSorters.java
+git add src/main/java/rbac/AssignmentSorters.java
+git commit -m "feat(filters): implement UserSorters, RoleSorters, AssignmentSorters (2.4)"
+
+# === КОММИТ 6: Демонстрация ===
 git add src/main/java/rbac/Main.java
-git commit -m "feat(bds): добавить Main класс с демонстрацией работы"
-
-# Слияние в ветку dev
-git checkout dev
-git merge --no-ff feature/bds -m "feat: завершить реализацию базовых структур данных (подзадача 1)"
-git push origin dev
+git commit -m "feat(filters): update Main.java with comprehensive filter/sort demonstrations"
