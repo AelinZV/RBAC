@@ -1,0 +1,22 @@
+From dcd35769d0d1362febd87fb0f32f3dbdca47838e Mon Sep 17 00:00:00 2001
+From: AelinZV <mediaservice7031@gmail.com>
+Date: Tue, 17 Feb 2026 11:39:52 +0700
+Subject: [PATCH] readme
+
+---
+ readme.md | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/readme.md b/readme.md
+index e9a1efb..3ecf040 100644
+--- a/readme.md
++++ b/readme.md
+@@ -1,4 +1,4 @@
+-# Убедитесь, что вы в правильной ветке
++# проверка ветки
+ git checkout feature/filters
+ git branch --show-current  # Должно быть: feature/filters
+ 
+-- 
+2.43.0
+

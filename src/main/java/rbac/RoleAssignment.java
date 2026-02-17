@@ -34,4 +34,10 @@ public interface RoleAssignment {
      * Тип назначения (ПОСТОЯННОЕ или ВРЕМЕННОЕ)
      */
     String assignmentType();
+
+    /**
+     * Краткое резюме назначения
+     * @return форматированная строка с информацией о назначении
+     */
+    String summary(); // ← ДОБАВЛЕНО
 }
