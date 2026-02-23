@@ -1,3 +1,4 @@
+---
 name: RBAC CI/CD Pipeline
 
 on:
@@ -14,19 +15,19 @@ jobs:
   build-test-demo:
     name: Сборка, тесты и демонстрация RBAC
     runs-on: ubuntu-latest
-    
+
     steps:
-      - name:  Checkout кода
+      - name: 📥 Checkout кода
         uses: actions/checkout@v4
-        
-      - name:  Настройка Java 17
+
+      - name: ⚙️ Настройка Java 17
         uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
           cache: 'maven'
-      
-      - name:  Проверка версий
+
+      - name: 🔍 Проверка версий
         run: |
           echo "=== Версии инструментов ==="
           java -version
@@ -37,14 +38,14 @@ jobs:
           find src/main/java -name "*.java" | wc -l
           echo "Тестовые классы:"
           find src/test/java -name "*Test.java" | wc -l
-      
-      - name: Сборка
+
+      - name: 🏗️ Стадия: Сборка
         id: build
         run: mvn -B clean compile -Dfile.encoding=UTF-8
         env:
           MAVEN_OPTS: "-Dfile.encoding=UTF-8"
-      
-      - name: Тестирование
+
+      - name: 🧪 Стадия: Тестирование
         id: test
         run: |
           echo "=== ЗАПУСК ТЕСТОВ ==="
@@ -62,8 +63,8 @@ jobs:
         env:
           MAVEN_OPTS: "-Dfile.encoding=UTF-8"
           JAVA_TOOL_OPTIONS: "-Dfile.encoding=UTF-8"
-      
-      - name:  Статистика тестов
+
+      - name: 📊 Статистика тестов
         if: success() || failure()
         run: |
           echo "=== СТАТИСТИКА ТЕСТОВ ==="
@@ -73,24 +74,25 @@ jobs:
             FAILURES=$(grep -oP 'Failures: \K\d+' "$TEST_LOG" | head -1 || echo "0")
             ERRORS=$(grep -oP 'Errors: \K\d+' "$TEST_LOG" | head -1 || echo "0")
             SKIPPED=$(grep -oP 'Skipped: \K\d+' "$TEST_LOG" | head -1 || echo "0")
-            
+
             echo "Запущено тестов: $RUN"
             echo "Провалено: $FAILURES"
             echo "Ошибок: $ERRORS"
             echo "Пропущено: $SKIPPED"
-            
+
             if [ "$FAILURES" != "0" ] || [ "$ERRORS" != "0" ]; then
-              echo " Некоторые тесты не прошли"
+              echo "⚠️ Некоторые тесты не прошли"
             else
-              echo " Все тесты прошли успешно"
+              echo "✅ Все тесты прошли успешно"
             fi
           fi
-      
-      - name: Демонстрация
+
+      - name: 🎮 Стадия: Демонстрация
         id: demo
         run: |
           echo "=== ЗАПУСК ДЕМОНСТРАЦИИ ==="
-          mvn -B exec:java -Dexec.mainClass="rbac.Main" -Dfile.encoding=UTF-8 2>&1 | tee demo-output.log
+          mvn -B exec:java -Dexec.mainClass="rbac.Main" \
+            -Dfile.encoding=UTF-8 2>&1 | tee demo-output.log
           EXIT_CODE=${PIPESTATUS[0]}
           echo ""
           echo "=== АНАЛИЗ ВЫВОДА ==="
@@ -102,8 +104,8 @@ jobs:
         env:
           MAVEN_OPTS: "-Dfile.encoding=UTF-8"
           JAVA_TOOL_OPTIONS: "-Dfile.encoding=UTF-8"
-      
-      - name:  Сохранить логи
+
+      - name: 💾 Сохранить логи
         uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -112,8 +114,8 @@ jobs:
             test-output.log
             demo-output.log
           retention-days: 7
-      
-      - name:  Итоговый отчёт
+
+      - name: ✅ Итоговый отчёт
         if: always()
         run: |
           echo "╔════════════════════════════════════════════════════════════════╗"
@@ -124,4 +126,5 @@ jobs:
           echo "Статус тестов: ${{ steps.test.outcome }}"
           echo "Статус демонстрации: ${{ steps.demo.outcome }}"
           echo ""
-          echo "Если все статусы 'success' — сборка прошла успешно! "
+          echo "Если все статусы 'success' — сборка прошла успешно! ✅"
+
