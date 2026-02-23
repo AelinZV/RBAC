@@ -16,38 +16,77 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-      - name: Checkout кода
+      - name:  Checkout кода
         uses: actions/checkout@v4
         
-      - name: Настройка Java 17
+      - name:  Настройка Java 17
         uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
           cache: 'maven'
       
-      - name: Проверка версий
+      - name:  Проверка версий
         run: |
           echo "=== Версии инструментов ==="
           java -version
           mvn -v
+          echo ""
           echo "=== Структура проекта ==="
-          find . -type f -name "*.java" | grep -E "(User|Role|Filter|Sorter)" | head -5
+          echo "Основные классы:"
+          find src/main/java -name "*.java" | wc -l
+          echo "Тестовые классы:"
+          find src/test/java -name "*Test.java" | wc -l
       
-      - name: Стадия Сборка
+      - name: Стадия: Сборка
         id: build
         run: mvn -B clean compile -Dfile.encoding=UTF-8
         env:
           MAVEN_OPTS: "-Dfile.encoding=UTF-8"
       
-      - name: Стадия Тестирование
+      - name: 🧪 Стадия: Тестирование
         id: test
-        run: mvn -B test -Dfile.encoding=UTF-8
+        run: |
+          echo "=== ЗАПУСК ТЕСТОВ ==="
+          mvn -B test -Dfile.encoding=UTF-8 2>&1 | tee test-output.log
+          echo ""
+          echo "=== РЕЗУЛЬТАТЫ ТЕСТОВ ==="
+          if grep -q "BUILD SUCCESS" test-output.log; then
+            echo "✓ Все тесты прошли успешно"
+            TEST_COUNT=$(grep -oP 'Tests run: \K\d+' test-output.log | head -1)
+            echo "Всего тестов: $TEST_COUNT"
+          else
+            echo "✗ Некоторые тесты не прошли"
+            exit 1
+          fi
         env:
           MAVEN_OPTS: "-Dfile.encoding=UTF-8"
-        continue-on-error: true  # Продолжаем даже если тестов нет (для подзадачи 2)
+          JAVA_TOOL_OPTIONS: "-Dfile.encoding=UTF-8"
       
-      - name: Стадия Демонстрация
+      - name: 📊 Статистика тестов
+        if: success() || failure()
+        run: |
+          echo "=== СТАТИСТИКА ТЕСТОВ ==="
+          TEST_LOG="test-output.log"
+          if [ -f "$TEST_LOG" ]; then
+            RUN=$(grep -oP 'Tests run: \K\d+' "$TEST_LOG" | head -1 || echo "0")
+            FAILURES=$(grep -oP 'Failures: \K\d+' "$TEST_LOG" | head -1 || echo "0")
+            ERRORS=$(grep -oP 'Errors: \K\d+' "$TEST_LOG" | head -1 || echo "0")
+            SKIPPED=$(grep -oP 'Skipped: \K\d+' "$TEST_LOG" | head -1 || echo "0")
+            
+            echo "Запущено тестов: $RUN"
+            echo "Провалено: $FAILURES"
+            echo "Ошибок: $ERRORS"
+            echo "Пропущено: $SKIPPED"
+            
+            if [ "$FAILURES" != "0" ] || [ "$ERRORS" != "0" ]; then
+              echo "  Некоторые тесты не прошли"
+            else
+              echo " Все тесты прошли успешно"
+            fi
+          fi
+      
+      - name: 🎮 Стадия: Демонстрация
         id: demo
         run: |
           echo "=== ЗАПУСК ДЕМОНСТРАЦИИ ==="
@@ -55,30 +94,34 @@ jobs:
           EXIT_CODE=${PIPESTATUS[0]}
           echo ""
           echo "=== АНАЛИЗ ВЫВОДА ==="
-          if grep -q "ТЕСТ 2.4" demo-output.log; then
-            echo "✓ Обнаружены тесты фильтров и сортировки (подзадача 2)"
-          else
-            echo "! Вывод не содержит тестов подзадачи 2"
-          fi
+          echo "Демонстрация завершена с кодом: $EXIT_CODE"
           echo ""
-          echo "=== ПОСЛЕДНИЕ 30 СТРОК ВЫВОДА ==="
-          tail -n 30 demo-output.log
+          echo "=== ПОСЛЕДНИЕ 40 СТРОК ВЫВОДА ==="
+          tail -n 40 demo-output.log
           exit $EXIT_CODE
         env:
           MAVEN_OPTS: "-Dfile.encoding=UTF-8"
           JAVA_TOOL_OPTIONS: "-Dfile.encoding=UTF-8"
       
-      - name: Сохранить лог демонстрации
+      - name:  Сохранить логи
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: demo-output-${{ github.sha }}
-          path: demo-output.log
+          name: build-logs-${{ github.sha }}
+          path: |
+            test-output.log
+            demo-output.log
           retention-days: 7
       
-      - name: Статистика артефактов
+      - name:  Итоговый отчёт
         if: always()
         run: |
-          echo "Размер лога: $(wc -c < demo-output.log) байт"
-          echo "Количество строк: $(wc -l < demo-output.log)"
+          echo "╔════════════════════════════════════════════════════════════════╗"
+          echo "║                    ИТОГОВЫЙ ОТЧЁТ                              ║"
+          echo "╚════════════════════════════════════════════════════════════════╝"
+          echo ""
+          echo "Статус сборки: ${{ steps.build.outcome }}"
+          echo "Статус тестов: ${{ steps.test.outcome }}"
           echo "Статус демонстрации: ${{ steps.demo.outcome }}"
+          echo ""
+          echo "Если все статусы 'success' — сборка прошла успешно! ✅"

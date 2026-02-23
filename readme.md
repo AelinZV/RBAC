@@ -30,3 +30,47 @@ git commit -m "feat(filters): implement UserSorters, RoleSorters, AssignmentSort
 # === КОММИТ 6: Демонстрация ===
 git add src/main/java/rbac/Main.java
 git commit -m "feat(filters): update Main.java with comprehensive filter/sort demonstrations"
+
+
+# === Подпункт 3===
+git add src/main/java/rbac/Repository.java
+git commit -m "feat(managers): implement generic Repository interface (3.1)"
+
+git add src/main/java/rbac/UserManager.java
+git commit -m "feat(managers): implement UserManager with filter and sort support (3.2)"
+
+git add src/main/java/rbac/RoleManager.java
+git commit -m "feat(managers): implement RoleManager with permission management (3.3)"
+
+git add src/main/java/rbac/AssignmentManager.java
+git commit -m "feat(managers): implement AssignmentManager with permission aggregation (3.4)"
+
+git add src/test/java/rbac/UserManagerTest.java
+git commit -m "test(managers): add UserManager unit tests"
+
+git add src/test/java/rbac/RoleManagerTest.java
+git commit -m "test(managers): add RoleManager unit tests"
+
+git add src/test/java/rbac/AssignmentManagerTest.java
+git commit -m "test(managers): add AssignmentManager unit tests"
+git add pom.xml
+git commit -m "fix(managers): configure maven-surefire-plugin for JUnit 5 test execution"
+git add .
+git commit -m "feat(managers): complete managers implementation with passing tests"
+git push origin feature/managers
+
+
+git checkout dev
+git merge --no-ff feature/managers -m "feat: complete managers implementation with tests (subtask 3)"
+git push origin dev
+
+# === Запуск Тестов через pom.xml ===
+ mvn clean install -U -Dfile.encoding=UTF-8
+ mvn test
+
+git add pom.xml
+git commit -m "fix(managers): configure maven-surefire-plugin for JUnit 5 test execution"
+git add .
+git commit -m "feat(managers): complete managers implementation with passing tests"
+git push origin feature/managers
+ 
