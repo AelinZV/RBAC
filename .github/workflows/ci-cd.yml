@@ -38,13 +38,13 @@ jobs:
           echo "Тестовые классы:"
           find src/test/java -name "*Test.java" | wc -l
       
-      - name: Стадия: Сборка
+      - name: Сборка
         id: build
         run: mvn -B clean compile -Dfile.encoding=UTF-8
         env:
           MAVEN_OPTS: "-Dfile.encoding=UTF-8"
       
-      - name: 🧪 Стадия: Тестирование
+      - name: Тестирование
         id: test
         run: |
           echo "=== ЗАПУСК ТЕСТОВ ==="
@@ -63,7 +63,7 @@ jobs:
           MAVEN_OPTS: "-Dfile.encoding=UTF-8"
           JAVA_TOOL_OPTIONS: "-Dfile.encoding=UTF-8"
       
-      - name: 📊 Статистика тестов
+      - name:  Статистика тестов
         if: success() || failure()
         run: |
           echo "=== СТАТИСТИКА ТЕСТОВ ==="
@@ -80,13 +80,13 @@ jobs:
             echo "Пропущено: $SKIPPED"
             
             if [ "$FAILURES" != "0" ] || [ "$ERRORS" != "0" ]; then
-              echo "  Некоторые тесты не прошли"
+              echo " Некоторые тесты не прошли"
             else
               echo " Все тесты прошли успешно"
             fi
           fi
       
-      - name: 🎮 Стадия: Демонстрация
+      - name: Демонстрация
         id: demo
         run: |
           echo "=== ЗАПУСК ДЕМОНСТРАЦИИ ==="
@@ -124,4 +124,4 @@ jobs:
           echo "Статус тестов: ${{ steps.test.outcome }}"
           echo "Статус демонстрации: ${{ steps.demo.outcome }}"
           echo ""
-          echo "Если все статусы 'success' — сборка прошла успешно! ✅"
+          echo "Если все статусы 'success' — сборка прошла успешно! "
