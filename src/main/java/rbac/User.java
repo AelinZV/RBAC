@@ -14,6 +14,7 @@ public record User(String username, String fullName, String email) {
 
     /**
      * Канонический конструктор с валидацией и нормализацией
+     * ВАЖНО: присваиваем новые значения параметрам напрямую, НЕ создаём новый экземпляр!
      */
     public User {
         // Валидация username
@@ -45,6 +46,7 @@ public record User(String username, String fullName, String email) {
 
     /**
      * Статический метод для валидации и создания пользователя
+     * Просто проксирует вызов конструктора (вся валидация уже в конструкторе)
      */
     public static User validate(String username, String fullName, String email) {
         return new User(username, fullName, email);

@@ -4,7 +4,10 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 
-
+/**
+ * Класс временного назначения роли
+ * Имеет срок действия и может быть продлён
+ */
 public class TemporaryAssignment extends AbstractRoleAssignment {
     // Форматер для парсинга даты
     private static final DateTimeFormatter FORMATTER =
@@ -23,7 +26,9 @@ public class TemporaryAssignment extends AbstractRoleAssignment {
         setExpiresAt(expiresAt);
     }
 
-
+    /**
+     * Установка даты истечения с валидацией формата
+     */
     private void setExpiresAt(String expiresAt) {
         if (expiresAt == null || expiresAt.trim().isEmpty()) {
             throw new IllegalArgumentException("Дата истечения не может быть пустой или null");
@@ -43,7 +48,9 @@ public class TemporaryAssignment extends AbstractRoleAssignment {
         return now.isBefore(expiry);
     }
 
-    
+    /**
+     * Парсинг даты истечения срока
+     */
     private LocalDateTime parseExpiryDate() {
         String dt = expiresAt.length() == 10 ? expiresAt + " 23:59" : expiresAt;
         return LocalDateTime.parse(dt, FORMATTER);
@@ -51,11 +58,17 @@ public class TemporaryAssignment extends AbstractRoleAssignment {
 
     @Override public String assignmentType() { return "ВРЕМЕННОЕ"; }
 
+    /**
+     * Продление временного назначения
+     */
     public void extend(String newExpirationDate) {
         setExpiresAt(newExpirationDate);
     }
 
-        public boolean isExpired() {
+    /**
+     * Проверка истечения срока действия
+     */
+    public boolean isExpired() {
         return !isActive();
     }
 
