@@ -29,11 +29,11 @@ jobs:
 
       - name: Проверка версий
         run: |
-          echo "=== Версии инструментов ==="
+          echo "=== ВЕРСИИ ИНСТРУМЕНТОВ ==="
           java -version
           mvn -v
           echo ""
-          echo "=== Структура проекта ==="
+          echo "=== СТРУКТУРА ПРОЕКТА ==="
           echo "Основные классы:"
           find src/main/java -name "*.java" 2>/dev/null | wc -l || echo "0"
           echo "Тестовые классы:"
@@ -41,113 +41,359 @@ jobs:
 
       - name: Проверка структуры подзадач
         run: |
-          echo "=== ПРОВЕРКА СТРУКТУРЫ ПОДЗАДАЧ ==="
+          echo ""
+          echo "╔════════════════════════════════════════════════════════════════╗"
+          echo "║           ПРОВЕРКА СТРУКТУРЫ ВСЕХ ПОДЗАДАЧ                    ║"
+          echo "╚════════════════════════════════════════════════════════════════╝"
+          echo ""
           
-          echo "Подзадача 1 (базовые структуры):"
-          [ -f src/main/java/rbac/User.java ] && \
-            echo "  ✓ User.java" || echo "  ✗ User.java отсутствует"
-          [ -f src/main/java/rbac/Permission.java ] && \
-            echo "  ✓ Permission.java" || echo "  ✗ Permission.java отсутствует"
-          [ -f src/main/java/rbac/Role.java ] && \
-            echo "  ✓ Role.java" || echo "  ✗ Role.java отсутствует"
-          [ -f src/main/java/rbac/AssignmentMetadata.java ] && \
-            echo "  ✓ AssignmentMetadata.java" || \
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "Подзадача 1: Базовые структуры данных"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          
+          USER_FILE="src/main/java/rbac/User.java"
+          if [ -f "$USER_FILE" ]; then
+            echo "  ✓ User.java"
+            grep -c "class User" "$USER_FILE" > /dev/null && echo "    → Класс User найден"
+          else
+            echo "  ✗ User.java отсутствует"
+          fi
+          
+          PERM_FILE="src/main/java/rbac/Permission.java"
+          if [ -f "$PERM_FILE" ]; then
+            echo "  ✓ Permission.java"
+            grep -c "class Permission" "$PERM_FILE" > /dev/null && echo "    → Класс Permission найден"
+          else
+            echo "  ✗ Permission.java отсутствует"
+          fi
+          
+          ROLE_FILE="src/main/java/rbac/Role.java"
+          if [ -f "$ROLE_FILE" ]; then
+            echo "  ✓ Role.java"
+            grep -c "class Role" "$ROLE_FILE" > /dev/null && echo "    → Класс Role найден"
+          else
+            echo "  ✗ Role.java отсутствует"
+          fi
+          
+          META_FILE="src/main/java/rbac/AssignmentMetadata.java"
+          if [ -f "$META_FILE" ]; then
+            echo "  ✓ AssignmentMetadata.java"
+            grep -c "class AssignmentMetadata" "$META_FILE" > /dev/null && \
+              echo "    → Класс AssignmentMetadata найден"
+          else
             echo "  ✗ AssignmentMetadata.java отсутствует"
-          [ -f src/main/java/rbac/RoleAssignment.java ] && \
-            echo "  ✓ RoleAssignment.java" || echo "  ✗ RoleAssignment.java отсутствует"
-          [ -f src/main/java/rbac/AbstractRoleAssignment.java ] && \
-            echo "  ✓ AbstractRoleAssignment.java" || \
+          fi
+          
+          ASSIGN_FILE="src/main/java/rbac/RoleAssignment.java"
+          if [ -f "$ASSIGN_FILE" ]; then
+            echo "  ✓ RoleAssignment.java"
+            grep -c "interface RoleAssignment" "$ASSIGN_FILE" > /dev/null && \
+              echo "    → Интерфейс RoleAssignment найден"
+          else
+            echo "  ✗ RoleAssignment.java отсутствует"
+          fi
+          
+          ABSTRACT_FILE="src/main/java/rbac/AbstractRoleAssignment.java"
+          if [ -f "$ABSTRACT_FILE" ]; then
+            echo "  ✓ AbstractRoleAssignment.java"
+            grep -c "abstract class AbstractRoleAssignment" "$ABSTRACT_FILE" > /dev/null && \
+              echo "    → Абстрактный класс найден"
+          else
             echo "  ✗ AbstractRoleAssignment.java отсутствует"
-          [ -f src/main/java/rbac/PermanentAssignment.java ] && \
-            echo "  ✓ PermanentAssignment.java" || \
+          fi
+          
+          PERM_ASSIGN_FILE="src/main/java/rbac/PermanentAssignment.java"
+          if [ -f "$PERM_ASSIGN_FILE" ]; then
+            echo "  ✓ PermanentAssignment.java"
+            grep -c "class PermanentAssignment" "$PERM_ASSIGN_FILE" > /dev/null && \
+              echo "    → Класс постоянного назначения найден"
+          else
             echo "  ✗ PermanentAssignment.java отсутствует"
-          [ -f src/main/java/rbac/TemporaryAssignment.java ] && \
-            echo "  ✓ TemporaryAssignment.java" || \
+          fi
+          
+          TEMP_ASSIGN_FILE="src/main/java/rbac/TemporaryAssignment.java"
+          if [ -f "$TEMP_ASSIGN_FILE" ]; then
+            echo "  ✓ TemporaryAssignment.java"
+            grep -c "class TemporaryAssignment" "$TEMP_ASSIGN_FILE" > /dev/null && \
+              echo "    → Класс временного назначения найден"
+          else
             echo "  ✗ TemporaryAssignment.java отсутствует"
+          fi
           
           echo ""
-          echo "Подзадача 2 (фильтры и сортировка):"
-          [ -f src/main/java/rbac/UserFilter.java ] && \
-            echo "  ✓ UserFilter.java" || echo "  ✗ UserFilter.java отсутствует"
-          [ -f src/main/java/rbac/UserFilters.java ] && \
-            echo "  ✓ UserFilters.java" || echo "  ✗ UserFilters.java отсутствует"
-          [ -f src/main/java/rbac/RoleFilter.java ] && \
-            echo "  ✓ RoleFilter.java" || echo "  ✗ RoleFilter.java отсутствует"
-          [ -f src/main/java/rbac/RoleFilters.java ] && \
-            echo "  ✓ RoleFilters.java" || echo "  ✗ RoleFilters.java отсутствует"
-          [ -f src/main/java/rbac/AssignmentFilter.java ] && \
-            echo "  ✓ AssignmentFilter.java" || \
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "Подзадача 2: Фильтры и сортировка"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          
+          USER_FILTER="src/main/java/rbac/UserFilter.java"
+          if [ -f "$USER_FILTER" ]; then
+            echo "  ✓ UserFilter.java"
+            grep -c "@FunctionalInterface" "$USER_FILTER" > /dev/null && \
+              echo "    → Функциональный интерфейс найден"
+          else
+            echo "  ✗ UserFilter.java отсутствует"
+          fi
+          
+          USER_FILTERS="src/main/java/rbac/UserFilters.java"
+          if [ -f "$USER_FILTERS" ]; then
+            echo "  ✓ UserFilters.java"
+            grep -c "class UserFilters" "$USER_FILTERS" > /dev/null && \
+              echo "    → Фабрика фильтров пользователей найдена"
+          else
+            echo "  ✗ UserFilters.java отсутствует"
+          fi
+          
+          ROLE_FILTER="src/main/java/rbac/RoleFilter.java"
+          if [ -f "$ROLE_FILTER" ]; then
+            echo "  ✓ RoleFilter.java"
+            grep -c "@FunctionalInterface" "$ROLE_FILTER" > /dev/null && \
+              echo "    → Функциональный интерфейс найден"
+          else
+            echo "  ✗ RoleFilter.java отсутствует"
+          fi
+          
+          ROLE_FILTERS="src/main/java/rbac/RoleFilters.java"
+          if [ -f "$ROLE_FILTERS" ]; then
+            echo "  ✓ RoleFilters.java"
+            grep -c "class RoleFilters" "$ROLE_FILTERS" > /dev/null && \
+              echo "    → Фабрика фильтров ролей найдена"
+          else
+            echo "  ✗ RoleFilters.java отсутствует"
+          fi
+          
+          ASSIGN_FILTER="src/main/java/rbac/AssignmentFilter.java"
+          if [ -f "$ASSIGN_FILTER" ]; then
+            echo "  ✓ AssignmentFilter.java"
+            grep -c "@FunctionalInterface" "$ASSIGN_FILTER" > /dev/null && \
+              echo "    → Функциональный интерфейс найден"
+          else
             echo "  ✗ AssignmentFilter.java отсутствует"
-          [ -f src/main/java/rbac/AssignmentFilters.java ] && \
-            echo "  ✓ AssignmentFilters.java" || \
+          fi
+          
+          ASSIGN_FILTERS="src/main/java/rbac/AssignmentFilters.java"
+          if [ -f "$ASSIGN_FILTERS" ]; then
+            echo "  ✓ AssignmentFilters.java"
+            grep -c "class AssignmentFilters" "$ASSIGN_FILTERS" > /dev/null && \
+              echo "    → Фабрика фильтров назначений найдена"
+          else
             echo "  ✗ AssignmentFilters.java отсутствует"
-          [ -f src/main/java/rbac/UserSorters.java ] && \
-            echo "  ✓ UserSorters.java" || echo "  ✗ UserSorters.java отсутствует"
-          [ -f src/main/java/rbac/RoleSorters.java ] && \
-            echo "  ✓ RoleSorters.java" || echo "  ✗ RoleSorters.java отсутствует"
-          [ -f src/main/java/rbac/AssignmentSorters.java ] && \
-            echo "  ✓ AssignmentSorters.java" || \
+          fi
+          
+          USER_SORTERS="src/main/java/rbac/UserSorters.java"
+          if [ -f "$USER_SORTERS" ]; then
+            echo "  ✓ UserSorters.java"
+            grep -c "class UserSorters" "$USER_SORTERS" > /dev/null && \
+              echo "    → Компараторы пользователей найдены"
+          else
+            echo "  ✗ UserSorters.java отсутствует"
+          fi
+          
+          ROLE_SORTERS="src/main/java/rbac/RoleSorters.java"
+          if [ -f "$ROLE_SORTERS" ]; then
+            echo "  ✓ RoleSorters.java"
+            grep -c "class RoleSorters" "$ROLE_SORTERS" > /dev/null && \
+              echo "    → Компараторы ролей найдены"
+          else
+            echo "  ✗ RoleSorters.java отсутствует"
+          fi
+          
+          ASSIGN_SORTERS="src/main/java/rbac/AssignmentSorters.java"
+          if [ -f "$ASSIGN_SORTERS" ]; then
+            echo "  ✓ AssignmentSorters.java"
+            grep -c "class AssignmentSorters" "$ASSIGN_SORTERS" > /dev/null && \
+              echo "    → Компараторы назначений найдены"
+          else
             echo "  ✗ AssignmentSorters.java отсутствует"
+          fi
           
           echo ""
-          echo "Подзадача 3 (менеджеры данных):"
-          [ -f src/main/java/rbac/Repository.java ] && \
-            echo "  ✓ Repository.java" || echo "  ✗ Repository.java отсутствует"
-          [ -f src/main/java/rbac/UserManager.java ] && \
-            echo "  ✓ UserManager.java" || echo "  ✗ UserManager.java отсутствует"
-          [ -f src/main/java/rbac/RoleManager.java ] && \
-            echo "  ✓ RoleManager.java" || echo "  ✗ RoleManager.java отсутствует"
-          [ -f src/main/java/rbac/AssignmentManager.java ] && \
-            echo "  ✓ AssignmentManager.java" || \
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "Подзадача 3: Менеджеры данных"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          
+          REPO_FILE="src/main/java/rbac/Repository.java"
+          if [ -f "$REPO_FILE" ]; then
+            echo "  ✓ Repository.java"
+            grep -c "interface Repository" "$REPO_FILE" > /dev/null && \
+              echo "    → Обобщённый интерфейс найден"
+          else
+            echo "  ✗ Repository.java отсутствует"
+          fi
+          
+          USER_MANAGER="src/main/java/rbac/UserManager.java"
+          if [ -f "$USER_MANAGER" ]; then
+            echo "  ✓ UserManager.java"
+            grep -c "class UserManager" "$USER_MANAGER" > /dev/null && \
+              echo "    → Менеджер пользователей найден"
+          else
+            echo "  ✗ UserManager.java отсутствует"
+          fi
+          
+          ROLE_MANAGER="src/main/java/rbac/RoleManager.java"
+          if [ -f "$ROLE_MANAGER" ]; then
+            echo "  ✓ RoleManager.java"
+            grep -c "class RoleManager" "$ROLE_MANAGER" > /dev/null && \
+              echo "    → Менеджер ролей найден"
+          else
+            echo "  ✗ RoleManager.java отсутствует"
+          fi
+          
+          ASSIGN_MANAGER="src/main/java/rbac/AssignmentManager.java"
+          if [ -f "$ASSIGN_MANAGER" ]; then
+            echo "  ✓ AssignmentManager.java"
+            grep -c "class AssignmentManager" "$ASSIGN_MANAGER" > /dev/null && \
+              echo "    → Менеджер назначений найден"
+          else
             echo "  ✗ AssignmentManager.java отсутствует"
+          fi
           
           echo ""
-          echo "Подзадача 4 (система команд):"
-          [ -f src/main/java/rbac/Command.java ] && \
-            echo "  ✓ Command.java" || echo "  ✗ Command.java отсутствует"
-          [ -f src/main/java/rbac/RBACSystem.java ] && \
-            echo "  ✓ RBACSystem.java" || echo "  ✗ RBACSystem.java отсутствует"
-          [ -f src/main/java/rbac/CommandParser.java ] && \
-            echo "  ✓ CommandParser.java" || echo "  ✗ CommandParser.java отсутствует"
-          [ -f src/main/java/rbac/CommandRegistry.java ] && \
-            echo "  ✓ CommandRegistry.java" || echo "  ✗ CommandRegistry.java отсутствует"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "Подзадача 4: Система команд и меню"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          
+          COMMAND_FILE="src/main/java/rbac/Command.java"
+          if [ -f "$COMMAND_FILE" ]; then
+            echo "  ✓ Command.java"
+            grep -c "@FunctionalInterface" "$COMMAND_FILE" > /dev/null && \
+              echo "    → Функциональный интерфейс команды найден"
+          else
+            echo "  ✗ Command.java отсутствует"
+          fi
+          
+          RBAC_SYSTEM="src/main/java/rbac/RBACSystem.java"
+          if [ -f "$RBAC_SYSTEM" ]; then
+            echo "  ✓ RBACSystem.java"
+            grep -c "class RBACSystem" "$RBAC_SYSTEM" > /dev/null && \
+              echo "    → Главный класс системы найден"
+          else
+            echo "  ✗ RBACSystem.java отсутствует"
+          fi
+          
+          COMMAND_PARSER="src/main/java/rbac/CommandParser.java"
+          if [ -f "$COMMAND_PARSER" ]; then
+            echo "  ✓ CommandParser.java"
+            grep -c "class CommandParser" "$COMMAND_PARSER" > /dev/null && \
+              echo "    → Парсер команд найден"
+          else
+            echo "  ✗ CommandParser.java отсутствует"
+          fi
+          
+          COMMAND_REGISTRY="src/main/java/rbac/CommandRegistry.java"
+          if [ -f "$COMMAND_REGISTRY" ]; then
+            echo "  ✓ CommandRegistry.java"
+            grep -c "class CommandRegistry" "$COMMAND_REGISTRY" > /dev/null && \
+              echo "    → Регистратор команд найден"
+          else
+            echo "  ✗ CommandRegistry.java отсутствует"
+          fi
           
           echo ""
-          echo "Подзадача 5 (утилиты):"
-          [ -f src/main/java/rbac/ValidationUtils.java ] && \
-            echo "  ✓ ValidationUtils.java" || echo "  ✗ ValidationUtils.java отсутствует"
-          [ -f src/main/java/rbac/AuditLog.java ] && \
-            echo "  ✓ AuditLog.java" || echo "  ✗ AuditLog.java отсутствует"
-          [ -f src/main/java/rbac/ReportGenerator.java ] && \
-            echo "  ✓ ReportGenerator.java" || echo "  ✗ ReportGenerator.java отсутствует"
-          [ -f src/main/java/rbac/ConsoleUtils.java ] && \
-            echo "  ✓ ConsoleUtils.java" || echo "  ✗ ConsoleUtils.java отсутствует"
-          [ -f src/main/java/rbac/FormatUtils.java ] && \
-            echo "  ✓ FormatUtils.java" || echo "  ✗ FormatUtils.java отсутствует"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "Подзадача 5: Дополнительные утилиты"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          
+          VALIDATION_UTILS="src/main/java/rbac/ValidationUtils.java"
+          if [ -f "$VALIDATION_UTILS" ]; then
+            echo "  ✓ ValidationUtils.java"
+            grep -c "class ValidationUtils" "$VALIDATION_UTILS" > /dev/null && \
+              echo "    → Утилиты валидации найдены"
+          else
+            echo "  ✗ ValidationUtils.java отсутствует"
+          fi
+          
+          AUDIT_LOG="src/main/java/rbac/AuditLog.java"
+          if [ -f "$AUDIT_LOG" ]; then
+            echo "  ✓ AuditLog.java"
+            grep -c "class AuditLog" "$AUDIT_LOG" > /dev/null && \
+              echo "    → Система логирования найдена"
+          else
+            echo "  ✗ AuditLog.java отсутствует"
+          fi
+          
+          REPORT_GENERATOR="src/main/java/rbac/ReportGenerator.java"
+          if [ -f "$REPORT_GENERATOR" ]; then
+            echo "  ✓ ReportGenerator.java"
+            grep -c "class ReportGenerator" "$REPORT_GENERATOR" > /dev/null && \
+              echo "    → Генератор отчётов найден"
+          else
+            echo "  ✗ ReportGenerator.java отсутствует"
+          fi
+          
+          CONSOLE_UTILS="src/main/java/rbac/ConsoleUtils.java"
+          if [ -f "$CONSOLE_UTILS" ]; then
+            echo "  ✓ ConsoleUtils.java"
+            grep -c "class ConsoleUtils" "$CONSOLE_UTILS" > /dev/null && \
+              echo "    → Интерактивные утилиты найдены"
+          else
+            echo "  ✗ ConsoleUtils.java отсутствует"
+          fi
+          
+          FORMAT_UTILS="src/main/java/rbac/FormatUtils.java"
+          if [ -f "$FORMAT_UTILS" ]; then
+            echo "  ✓ FormatUtils.java"
+            grep -c "class FormatUtils" "$FORMAT_UTILS" > /dev/null && \
+              echo "    → Утилиты форматирования найдены"
+          else
+            echo "  ✗ FormatUtils.java отсутствует"
+          fi
           
           echo ""
-          echo "Тесты:"
-          [ -f src/test/java/rbac/UserManagerTest.java ] && \
-            echo "  ✓ UserManagerTest.java" || echo "  ✗ UserManagerTest.java отсутствует"
-          [ -f src/test/java/rbac/RoleManagerTest.java ] && \
-            echo "  ✓ RoleManagerTest.java" || echo "  ✗ RoleManagerTest.java отсутствует"
-          [ -f src/test/java/rbac/AssignmentManagerTest.java ] && \
-            echo "  ✓ AssignmentManagerTest.java" || \
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "Тесты"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          
+          USER_MANAGER_TEST="src/test/java/rbac/UserManagerTest.java"
+          if [ -f "$USER_MANAGER_TEST" ]; then
+            echo "  ✓ UserManagerTest.java"
+            grep -c "class UserManagerTest" "$USER_MANAGER_TEST" > /dev/null && \
+              echo "    → Тесты менеджера пользователей найдены"
+          else
+            echo "  ✗ UserManagerTest.java отсутствует"
+          fi
+          
+          ROLE_MANAGER_TEST="src/test/java/rbac/RoleManagerTest.java"
+          if [ -f "$ROLE_MANAGER_TEST" ]; then
+            echo "  ✓ RoleManagerTest.java"
+            grep -c "class RoleManagerTest" "$ROLE_MANAGER_TEST" > /dev/null && \
+              echo "    → Тесты менеджера ролей найдены"
+          else
+            echo "  ✗ RoleManagerTest.java отсутствует"
+          fi
+          
+          ASSIGN_MANAGER_TEST="src/test/java/rbac/AssignmentManagerTest.java"
+          if [ -f "$ASSIGN_MANAGER_TEST" ]; then
+            echo "  ✓ AssignmentManagerTest.java"
+            grep -c "class AssignmentManagerTest" "$ASSIGN_MANAGER_TEST" > /dev/null && \
+              echo "    → Тесты менеджера назначений найдены"
+          else
             echo "  ✗ AssignmentManagerTest.java отсутствует"
+          fi
 
       - name: Стадия Сборка
         id: build
-        run: mvn -B clean compile -Dfile.encoding=UTF-8
+        run: |
+          echo ""
+          echo "╔════════════════════════════════════════════════════════════════╗"
+          echo "║                    СТАДИЯ: СБОРКА                              ║"
+          echo "╚════════════════════════════════════════════════════════════════╝"
+          echo ""
+          mvn -B clean compile -Dfile.encoding=UTF-8
         env:
           MAVEN_OPTS: "-Dfile.encoding=UTF-8"
 
       - name: Стадия Тестирование
         id: test
         run: |
-          echo "=== ЗАПУСК ТЕСТОВ ==="
+          echo ""
+          echo "╔════════════════════════════════════════════════════════════════╗"
+          echo "║                    СТАДИЯ: ТЕСТИРОВАНИЕ                        ║"
+          echo "╚════════════════════════════════════════════════════════════════╝"
+          echo ""
+          echo "=== ЗАПУСК МОДУЛЬНЫХ ТЕСТОВ ==="
           mvn -B test -Dfile.encoding=UTF-8 2>&1 | tee test-output.log
           echo ""
-          echo "=== РЕЗУЛЬТАТЫ ТЕСТОВ ==="
+          echo "=== РЕЗУЛЬТАТЫ ТЕСТИРОВАНИЯ ==="
           if grep -q "BUILD SUCCESS" test-output.log; then
             echo "✓ Все тесты прошли успешно"
             TEST_COUNT=$(grep -oP 'Tests run: \K\d+' test-output.log | \
@@ -164,7 +410,11 @@ jobs:
       - name: Статистика тестов
         if: always()
         run: |
-          echo "=== СТАТИСТИКА ТЕСТОВ ==="
+          echo ""
+          echo "╔════════════════════════════════════════════════════════════════╗"
+          echo "║                    СТАТИСТИКА ТЕСТОВ                           ║"
+          echo "╚════════════════════════════════════════════════════════════════╝"
+          echo ""
           TEST_LOG="test-output.log"
           if [ -f "$TEST_LOG" ]; then
             RUN=$(grep -oP 'Tests run: \K\d+' "$TEST_LOG" | \
@@ -180,6 +430,7 @@ jobs:
             echo "Провалено: $FAILURES"
             echo "Ошибок: $ERRORS"
             echo "Пропущено: $SKIPPED"
+            echo ""
 
             if [ "$FAILURES" != "0" ] || [ "$ERRORS" != "0" ]; then
               echo "⚠️ Некоторые тесты не прошли"
@@ -191,43 +442,80 @@ jobs:
       - name: Стадия Демонстрация
         id: demo
         run: |
-          echo "=== ЗАПУСК ДЕМОНСТРАЦИИ ВСЕХ ПОДЗАДАЧ ==="
+          echo ""
+          echo "╔════════════════════════════════════════════════════════════════╗"
+          echo "║              СТАДИЯ: ДЕМОНСТРАЦИЯ ВСЕХ ПОДЗАДАЧ                ║"
+          echo "╚════════════════════════════════════════════════════════════════╝"
+          echo ""
+          echo "=== ЗАПУСК АВТОМАТИЧЕСКОЙ ДЕМОНСТРАЦИИ ==="
           echo "n" | mvn -B exec:java -Dexec.mainClass="rbac.Main" \
             -Dfile.encoding=UTF-8 2>&1 | tee demo-output.log
           EXIT_CODE=${PIPESTATUS[0]}
           echo ""
-          echo "=== АНАЛИЗ ВЫВОДА ==="
-          echo "Демонстрация завершена с кодом: $EXIT_CODE"
+          echo "=== АНАЛИЗ ВЫВОДА ДЕМОНСТРАЦИИ ==="
+          echo "Код завершения: $EXIT_CODE"
+          echo ""
+          
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "Проверка выполнения подзадач:"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          
+          if grep -q "ПОДЗАДАЧА 1" demo-output.log; then
+            echo "✅ Подзадача 1: Базовые структуры данных"
+            echo "   → Тесты валидации пользователя"
+            echo "   → Права доступа и их поиск"
+            echo "   → Создание ролей"
+            echo "   → Метаданные назначений"
+            echo "   → Постоянные и временные назначения"
+          else
+            echo "❌ Подзадача 1 не найдена в выводе"
+          fi
           
           echo ""
-          echo "=== ПРОВЕРКА ПОДЗАДАЧ В ВЫВОДЕ ==="
-          if grep -q "ПОДЗАДАЧА 1" demo-output.log; then
-            echo "✓ Подзадача 1 (базовые структуры) выполнена"
-          else
-            echo "✗ Подзадача 1 не найдена в выводе"
-          fi
           
           if grep -q "ПОДЗАДАЧА 2" demo-output.log; then
-            echo "✓ Подзадача 2 (фильтры и сортировка) выполнена"
+            echo "✅ Подзадача 2: Фильтры и сортировка"
+            echo "   → Фильтрация пользователей (по домену, имени)"
+            echo "   → Комбинирование фильтров (and/or)"
+            echo "   → Фильтрация ролей (по количеству прав)"
+            echo "   → Фильтрация назначений (активные/временные)"
+            echo "   → Сортировка пользователей, ролей, назначений"
           else
-            echo "✗ Подзадача 2 не найдена в выводе"
-          fi
-          
-          if grep -q "ПОДЗАДАЧА 3" demo-output.log; then
-            echo "✓ Подзадача 3 (менеджеры данных) выполнена"
-          else
-            echo "✗ Подзадача 3 не найдена в выводе"
-          fi
-          
-          if grep -q "ПОДЗАДАЧА 5" demo-output.log; then
-            echo "✓ Подзадача 5 (утилиты) выполнена"
-          else
-            echo "✗ Подзадача 5 не найдена в выводе"
+            echo "❌ Подзадача 2 не найдена в выводе"
           fi
           
           echo ""
-          echo "=== ПОСЛЕДНИЕ 50 СТРОК ВЫВОДА ==="
-          tail -n 50 demo-output.log
+          
+          if grep -q "ПОДЗАДАЧА 3" demo-output.log; then
+            echo "✅ Подзадача 3: Менеджеры данных"
+            echo "   → Менеджер пользователей (add, find, update, remove)"
+            echo "   → Менеджер ролей (управление правами)"
+            echo "   → Менеджер назначений (агрегация прав)"
+            echo "   → Проверка прав пользователя"
+          else
+            echo "❌ Подзадача 3 не найдена в выводе"
+          fi
+          
+          echo ""
+          
+          if grep -q "ПОДЗАДАЧА 5" demo-output.log; then
+            echo "✅ Подзадача 5: Дополнительные утилиты"
+            echo "   → Система валидации (ValidationUtils)"
+            echo "   → Система логирования (AuditLog)"
+            echo "   → Генерация отчётов (ReportGenerator)"
+            echo "   → Интерактивные утилиты (ConsoleUtils)"
+            echo "   → Форматирование (FormatUtils)"
+          else
+            echo "❌ Подзадача 5 не найдена в выводе"
+          fi
+          
+          echo ""
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "Детальный вывод последних 60 строк:"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo ""
+          tail -n 60 demo-output.log
+          
           exit $EXIT_CODE
         env:
           MAVEN_OPTS: "-Dfile.encoding=UTF-8"
@@ -235,18 +523,35 @@ jobs:
 
       - name: Анализ покрытия кода
         run: |
-          echo "=== АНАЛИЗ ПОКРЫТИЯ КОДА ==="
+          echo ""
+          echo "╔════════════════════════════════════════════════════════════════╗"
+          echo "║                    АНАЛИЗ ПОКРЫТИЯ КОДА                        ║"
+          echo "╚════════════════════════════════════════════════════════════════╝"
+          echo ""
+          
           TOTAL_CLASSES=$(find src/main/java/rbac -name "*.java" -type f | wc -l)
           TOTAL_TESTS=$(find src/test/java/rbac -name "*Test.java" -type f | wc -l)
           
           echo "Всего классов: $TOTAL_CLASSES"
           echo "Всего тестовых классов: $TOTAL_TESTS"
+          echo ""
+          
+          if [ "$TOTAL_CLASSES" -ge 25 ]; then
+            echo "✅ Объём реализации: достаточный (минимум 25 классов)"
+          else
+            echo "⚠️ Объём реализации: $TOTAL_CLASSES классов (требуется минимум 25)"
+          fi
           
           if [ "$TOTAL_TESTS" -ge 3 ]; then
             echo "✅ Покрытие тестами: достаточно (минимум 3 тестовых класса)"
           else
             echo "⚠️ Покрытие тестами: недостаточно (требуется минимум 3 тестовых класса)"
           fi
+          
+          echo ""
+          echo "Структура проекта:"
+          echo "  src/main/java/rbac/   → $TOTAL_CLASSES классов"
+          echo "  src/test/java/rbac/   → $TOTAL_TESTS тестовых классов"
 
       - name: Сохранить логи
         uses: actions/upload-artifact@v4
@@ -266,22 +571,34 @@ jobs:
           echo "║                    ИТОГОВЫЙ ОТЧЁТ ПО СБОРКЕ                    ║"
           echo "╚════════════════════════════════════════════════════════════════╝"
           echo ""
-          echo "Статус сборки:    ${{ steps.build.outcome }}"
-          echo "Статус тестов:    ${{ steps.test.outcome }}"
-          echo "Статус демонстрации: ${{ steps.demo.outcome }}"
+          echo "Статус сборки:        ${{ steps.build.outcome }}"
+          echo "Статус тестов:        ${{ steps.test.outcome }}"
+          echo "Статус демонстрации:  ${{ steps.demo.outcome }}"
           echo ""
-          echo "Все подзадачи реализованы и протестированы:"
+          echo "Реализованные подзадачи:"
           echo "  ✅ Подзадача 1: Базовые структуры данных"
           echo "  ✅ Подзадача 2: Фильтры и сортировка"
           echo "  ✅ Подзадача 3: Менеджеры данных (с тестами)"
           echo "  ✅ Подзадача 4: Система команд и меню"
           echo "  ✅ Подзадача 5: Дополнительные утилиты"
           echo ""
-          if [ "${{ steps.build.outcome }}" = "success" ] && \
-             [ "${{ steps.test.outcome }}" = "success" ] && \
-             [ "${{ steps.demo.outcome }}" = "success" ]; then
-            echo "✅ СБОРКА УСПЕШНА — все подзадачи работают корректно!"
+          
+          BUILD_OK="${{ steps.build.outcome }}"
+          TEST_OK="${{ steps.test.outcome }}"
+          DEMO_OK="${{ steps.demo.outcome }}"
+          
+          if [ "$BUILD_OK" = "success" ] && [ "$TEST_OK" = "success" ] && \
+             [ "$DEMO_OK" = "success" ]; then
+            echo "╔════════════════════════════════════════════════════════════════╗"
+            echo "║                                                                ║"
+            echo "║          ✅ СБОРКА УСПЕШНА — ВСЕ ПОДЗАДАЧИ РАБОТАЮТ!          ║"
+            echo "║                                                                ║"
+            echo "╚════════════════════════════════════════════════════════════════╝"
           else
-            echo "⚠️ СБОРКА ЗАВЕРШЕНА С ПРЕДУПРЕЖДЕНИЯМИ"
+            echo "╔════════════════════════════════════════════════════════════════╗"
+            echo "║                                                                ║"
+            echo "║      ⚠️ СБОРКА ЗАВЕРШЕНА С ПРЕДУПРЕЖДЕНИЯМИ/ОШИБКАМИ         ║"
+            echo "║                                                                ║"
+            echo "╚════════════════════════════════════════════════════════════════╝"
           fi
-          echo "╚════════════════════════════════════════════════════════════════╝"
+          echo ""
