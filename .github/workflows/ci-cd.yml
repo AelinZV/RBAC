@@ -5,11 +5,10 @@ on:
     branches:
       - main
       - dev
-      - feature/**
+      - 'feature/**'
   pull_request:
     branches:
       - dev
-      - feature/**
 
 jobs:
   build-test-demo:
@@ -33,11 +32,7 @@ jobs:
           java -version
           mvn -v
 
-      # ============================================================
-      # 🆕 НОВЫЙ ШАГ: Проверка Подзадачи 1 (Потокобезопасность)
-      # ============================================================
-      - name: Проверка Подзадачи 1: Потокобезопасные менеджеры
-        if: github.ref == 'refs/heads/feature/threadsafe-managers' || contains(github.ref, 'feature/threadsafe')
+      - name: Проверка Подзадачи 1 - Потокобезопасность
         run: |
           echo ""
           echo "╔════════════════════════════════════════════════════════════════╗"
@@ -48,64 +43,55 @@ jobs:
           CHECKS_PASSED=0
           CHECKS_TOTAL=5
           
-          # Проверка 1: ConcurrentHashMap в менеджерах
-          echo "📋 Проверка 1: ConcurrentHashMap в менеджерах"
+          echo "Проверка 1: ConcurrentHashMap в менеджерах"
           if grep -rq "ConcurrentHashMap" src/main/java/rbac/*Manager.java; then
-            echo "  ✓ ConcurrentHashMap найден в менеджерах"
+            echo "  ✓ ConcurrentHashMap найден"
             CHECKS_PASSED=$((CHECKS_PASSED + 1))
           else
             echo "  ✗ ConcurrentHashMap не найден"
           fi
-          echo ""
           
-          # Проверка 2: ReadWriteLock в менеджерах
-          echo "📋 Проверка 2: ReadWriteLock для синхронизации"
-          if grep -rq "ReadWriteLock\|ReentrantReadWriteLock" src/main/java/rbac/*Manager.java; then
-            echo "  ✓ ReadWriteLock найден в менеджерах"
+          echo ""
+          echo "Проверка 2: ReadWriteLock для синхронизации"
+          if grep -rq "ReadWriteLock" src/main/java/rbac/*Manager.java; then
+            echo "  ✓ ReadWriteLock найден"
             CHECKS_PASSED=$((CHECKS_PASSED + 1))
           else
             echo "  ✗ ReadWriteLock не найден"
           fi
-          echo ""
           
-          # Проверка 3: Методы findByFilterParallel
-          echo "📋 Проверка 3: Методы findByFilterParallel"
+          echo ""
+          echo "Проверка 3: Методы findByFilterParallel"
           if grep -rq "findByFilterParallel" src/main/java/rbac/*Manager.java; then
-            echo "  ✓ findByFilterParallel найден в менеджерах"
+            echo "  ✓ findByFilterParallel найден"
             CHECKS_PASSED=$((CHECKS_PASSED + 1))
           else
             echo "  ✗ findByFilterParallel не найден"
           fi
-          echo ""
           
-          # Проверка 4: Тесты на конкурентный доступ
-          echo "📋 Проверка 4: Тесты на конкурентный доступ"
-          if grep -rq "ExecutorService\|CountDownLatch\|Concurrent" src/test/java/rbac/*Test.java; then
+          echo ""
+          echo "Проверка 4: Тесты на конкурентный доступ"
+          if grep -rq "ExecutorService\|CountDownLatch" src/test/java/rbac/*Test.java; then
             echo "  ✓ Тесты на многопоточность найдены"
             CHECKS_PASSED=$((CHECKS_PASSED + 1))
           else
             echo "  ✗ Тесты на многопоточность не найдены"
           fi
-          echo ""
           
-          # Проверка 5: AtomicLong для генерации ID
-          echo "📋 Проверка 5: AtomicLong для генерации ID"
+          echo ""
+          echo "Проверка 5: AtomicLong для генерации ID"
           if grep -rq "AtomicLong" src/main/java/rbac/*Manager.java; then
-            echo "  ✓ AtomicLong найден для генерации ID"
+            echo "  ✓ AtomicLong найден"
             CHECKS_PASSED=$((CHECKS_PASSED + 1))
           else
-            echo "  ℹ AtomicLong не найден (может использоваться альтернатива)"
+            echo "  ℹ AtomicLong не найден"
             CHECKS_PASSED=$((CHECKS_PASSED + 1))
           fi
-          echo ""
           
+          echo ""
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           echo "Результат: $CHECKS_PASSED/$CHECKS_TOTAL проверок пройдено"
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-          
-          if [ $CHECKS_PASSED -lt $CHECKS_TOTAL ]; then
-            echo "⚠️ Не все проверки пройдены, но сборка продолжается"
-          fi
 
       - name: Проверка структуры подзадач
         run: |
@@ -122,8 +108,6 @@ jobs:
           USER_MANAGER="src/main/java/rbac/UserManager.java"
           if [ -f "$USER_MANAGER" ]; then
             echo "  ✓ UserManager.java"
-            grep -c "class UserManager" "$USER_MANAGER" > /dev/null && \
-              echo "    → Менеджер пользователей найден"
           else
             echo "  ✗ UserManager.java отсутствует"
           fi
@@ -131,8 +115,6 @@ jobs:
           ROLE_MANAGER="src/main/java/rbac/RoleManager.java"
           if [ -f "$ROLE_MANAGER" ]; then
             echo "  ✓ RoleManager.java"
-            grep -c "class RoleManager" "$ROLE_MANAGER" > /dev/null && \
-              echo "    → Менеджер ролей найден"
           else
             echo "  ✗ RoleManager.java отсутствует"
           fi
@@ -140,8 +122,6 @@ jobs:
           ASSIGN_MANAGER="src/main/java/rbac/AssignmentManager.java"
           if [ -f "$ASSIGN_MANAGER" ]; then
             echo "  ✓ AssignmentManager.java"
-            grep -c "class AssignmentManager" "$ASSIGN_MANAGER" > /dev/null && \
-              echo "    → Менеджер назначений найден"
           else
             echo "  ✗ AssignmentManager.java отсутствует"
           fi
@@ -154,8 +134,6 @@ jobs:
           USER_MANAGER_TEST="src/test/java/rbac/UserManagerTest.java"
           if [ -f "$USER_MANAGER_TEST" ]; then
             echo "  ✓ UserManagerTest.java"
-            grep -c "class UserManagerTest" "$USER_MANAGER_TEST" > /dev/null && \
-              echo "    → Тесты менеджера пользователей найдены"
           else
             echo "  ✗ UserManagerTest.java отсутствует"
           fi
@@ -163,8 +141,6 @@ jobs:
           ROLE_MANAGER_TEST="src/test/java/rbac/RoleManagerTest.java"
           if [ -f "$ROLE_MANAGER_TEST" ]; then
             echo "  ✓ RoleManagerTest.java"
-            grep -c "class RoleManagerTest" "$ROLE_MANAGER_TEST" > /dev/null && \
-              echo "    → Тесты менеджера ролей найдены"
           else
             echo "  ✗ RoleManagerTest.java отсутствует"
           fi
@@ -172,8 +148,6 @@ jobs:
           ASSIGN_MANAGER_TEST="src/test/java/rbac/AssignmentManagerTest.java"
           if [ -f "$ASSIGN_MANAGER_TEST" ]; then
             echo "  ✓ AssignmentManagerTest.java"
-            grep -c "class AssignmentManagerTest" "$ASSIGN_MANAGER_TEST" > /dev/null && \
-              echo "    → Тесты менеджера назначений найдены"
           else
             echo "  ✗ AssignmentManagerTest.java отсутствует"
           fi
@@ -214,11 +188,7 @@ jobs:
           MAVEN_OPTS: "-Dfile.encoding=UTF-8"
           JAVA_TOOL_OPTIONS: "-Dfile.encoding=UTF-8"
 
-      # ============================================================
-      # 🆕 НОВЫЙ ШАГ: Запуск тестов на потокобезопасность
-      # ============================================================
       - name: Тесты на потокобезопасность
-        if: github.ref == 'refs/heads/feature/threadsafe-managers' || contains(github.ref, 'feature/threadsafe')
         run: |
           echo ""
           echo "╔════════════════════════════════════════════════════════════════╗"
@@ -230,7 +200,6 @@ jobs:
           
           if grep -q "BUILD SUCCESS" thread-test-output.log; then
             echo "✅ Все тесты менеджеров прошли успешно"
-            grep -oP 'Tests run: \K\d+' thread-test-output.log | head -1 | xargs -I {} echo "Всего тестов: {}"
           else
             echo "❌ Тесты менеджеров не прошли"
             exit 1
@@ -346,8 +315,7 @@ jobs:
           TEST_OK="${{ steps.test.outcome }}"
           DEMO_OK="${{ steps.demo.outcome }}"
           
-          if [ "$BUILD_OK" = "success" ] && [ "$TEST_OK" = "success" ] && \
-             [ "$DEMO_OK" = "success" ]; then
+          if [ "$BUILD_OK" = "success" ] && [ "$TEST_OK" = "success" ] && [ "$DEMO_OK" = "success" ]; then
             echo "╔════════════════════════════════════════════════════════════════╗"
             echo "║                                                                ║"
             echo "║          ✅ СБОРКА УСПЕШНА — ВСЕ ПОДЗАДАЧИ РАБОТАЮТ!          ║"
