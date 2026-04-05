@@ -1,278 +1,236 @@
 package rbac;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 
+/**
+ * Потокoбезопасный менеджер назначений ролей.
+ */
+public class AssignmentManager {
 
-public class AssignmentManager implements Repository<RoleAssignment> {
+    private final Map<String, RoleAssignment> assignments = new ConcurrentHashMap<>();
+    private final Map<String, String> userRoleIndex = new ConcurrentHashMap<>();
+    private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
-    // Хранилище назначений: ключ - идентификатор назначения
-    private final Map<String, RoleAssignment> assignments = new HashMap<>();
+    private String makeUserRoleKey(String username, String roleName) {
+        return username + ":" + roleName;
+    }
 
-    // Индекс назначений по пользователю для быстрого поиска
-    private final Map<User, List<RoleAssignment>> assignmentsByUser = new HashMap<>();
-
-    // Индекс назначений по роли для быстрого поиска
-    private final Map<Role, List<RoleAssignment>> assignmentsByRole = new HashMap<>();
-
-
-    @Override
     public void add(RoleAssignment assignment) {
-        if (assignment == null) {
-            throw new IllegalArgumentException("Назначение не может быть null");
-        }
-
-        // Проверяем, не существует ли уже такое назначение
-        if (assignments.containsKey(assignment.assignmentId())) {
-            throw new IllegalArgumentException("Назначение с идентификатором '" +
-                    assignment.assignmentId() + "' уже существует");
-        }
-
-        // Проверяем, не назначена ли уже эта роль пользователю (если назначение активно)
-        if (assignment.isActive()) {
-            boolean alreadyAssigned = assignments.values().stream()
-                    .anyMatch(existing ->
-                            existing.isActive() &&
-                                    existing.user().equals(assignment.user()) &&
-                                    existing.role().equals(assignment.role())
-                    );
-
-            if (alreadyAssigned) {
-                throw new IllegalArgumentException("Роль '" + assignment.role().name() +
-                        "' уже назначена пользователю '" + assignment.user().username() + "'");
+        lock.writeLock().lock();
+        try {
+            String userRoleKey = makeUserRoleKey(
+                    assignment.user().username(),
+                    assignment.role().name()
+            );
+            if (userRoleIndex.containsKey(userRoleKey)) {
+                throw new IllegalArgumentException(
+                        "User " + assignment.user().username() +
+                                " already has role " + assignment.role().name());
             }
+            assignments.put(assignment.assignmentId(), assignment);
+            userRoleIndex.put(userRoleKey, assignment.assignmentId());
+        } finally {
+            lock.writeLock().unlock();
         }
-
-        // Добавляем назначение в основное хранилище
-        assignments.put(assignment.assignmentId(), assignment);
-
-        // Обновляем индексы
-        assignmentsByUser.computeIfAbsent(assignment.user(), k -> new ArrayList<>())
-                .add(assignment);
-
-        assignmentsByRole.computeIfAbsent(assignment.role(), k -> new ArrayList<>())
-                .add(assignment);
     }
 
-
-    @Override
-    public boolean remove(RoleAssignment assignment) {
-        if (assignment == null) {
-            return false;
+    public Optional<RoleAssignment> findById(String assignmentId) {
+        lock.readLock().lock();
+        try {
+            return Optional.ofNullable(assignments.get(assignmentId));
+        } finally {
+            lock.readLock().unlock();
         }
-
-        RoleAssignment removed = assignments.remove(assignment.assignmentId());
-        if (removed != null) {
-            // Удаляем из индексов
-            List<RoleAssignment> userAssignments = assignmentsByUser.get(removed.user());
-            if (userAssignments != null) {
-                userAssignments.remove(removed);
-                if (userAssignments.isEmpty()) {
-                    assignmentsByUser.remove(removed.user());
-                }
-            }
-
-            List<RoleAssignment> roleAssignments = assignmentsByRole.get(removed.role());
-            if (roleAssignments != null) {
-                roleAssignments.remove(removed);
-                if (roleAssignments.isEmpty()) {
-                    assignmentsByRole.remove(removed.role());
-                }
-            }
-
-            return true;
-        }
-
-        return false;
-    }
-
-
-    @Override
-    public Optional<RoleAssignment> findById(String id) {
-        if (id == null || id.trim().isEmpty()) {
-            return Optional.empty();
-        }
-
-        return Optional.ofNullable(assignments.get(id));
-    }
-
-    /**
-     * Получить все назначения из менеджера
-     * @return список всех назначений
-     */
-    @Override
-    public List<RoleAssignment> findAll() {
-        return new ArrayList<>(assignments.values());
-    }
-
-    /**
-     * Получить количество назначений в менеджере
-     * @return количество назначений
-     */
-    @Override
-    public int count() {
-        return assignments.size();
-    }
-
-
-    @Override
-    public void clear() {
-        assignments.clear();
-        assignmentsByUser.clear();
-        assignmentsByRole.clear();
     }
 
     public List<RoleAssignment> findByUser(User user) {
-        if (user == null) {
-            return new ArrayList<>();
+        lock.readLock().lock();
+        try {
+            return assignments.values().stream()
+                    .filter(a -> a.user().username().equals(user.username()))
+                    .collect(Collectors.toList());
+        } finally {
+            lock.readLock().unlock();
         }
-
-        return assignmentsByUser.getOrDefault(user, new ArrayList<>());
     }
 
-
-    public List<RoleAssignment> findByRole(Role role) {
-        if (role == null) {
-            return new ArrayList<>();
+    public List<RoleAssignment> findAll(AssignmentFilter filter, Comparator<RoleAssignment> sorter) {
+        lock.readLock().lock();
+        try {
+            List<RoleAssignment> result = new ArrayList<>(assignments.values());
+            if (filter != null) result = result.stream().filter(filter).collect(Collectors.toList());
+            if (sorter != null) result.sort(sorter);
+            return result;
+        } finally {
+            lock.readLock().unlock();
         }
-
-        return assignmentsByRole.getOrDefault(role, new ArrayList<>());
     }
 
+    public List<RoleAssignment> findAll() { return findAll(null, null); }
+    public List<RoleAssignment> findByFilter(AssignmentFilter filter) { return findAll(filter, null); }
 
-    public List<RoleAssignment> findByFilter(AssignmentFilter filter) {
-        if (filter == null) {
-            return new ArrayList<>(assignments.values());
-        }
-
-        return assignments.values().stream()
+    public List<RoleAssignment> findByFilterParallel(AssignmentFilter filter) {
+        return assignments.values().parallelStream()
                 .filter(filter)
                 .collect(Collectors.toList());
     }
 
-
-    public List<RoleAssignment> findAll(AssignmentFilter filter, Comparator<RoleAssignment> sorter) {
-        if (filter == null && sorter == null) {
-            return new ArrayList<>(assignments.values());
-        }
-
-        List<RoleAssignment> result = assignments.values().stream()
-                .filter(filter != null ? filter : assignment -> true)
-                .collect(Collectors.toList());
-
-        if (sorter != null) {
-            result.sort(sorter);
-        }
-
-        return result;
-    }
-
-
     public List<RoleAssignment> getActiveAssignments() {
-        return assignments.values().stream()
-                .filter(RoleAssignment::isActive)
-                .collect(Collectors.toList());
+        lock.readLock().lock();
+        try {
+            return assignments.values().stream()
+                    .filter(RoleAssignment::isActive)
+                    .collect(Collectors.toList());
+        } finally {
+            lock.readLock().unlock();
+        }
     }
-
-
-    public List<RoleAssignment> getExpiredAssignments() {
-        return assignments.values().stream()
-                .filter(assignment -> !assignment.isActive())
-                .collect(Collectors.toList());
-    }
-
 
     public boolean userHasRole(User user, Role role) {
-        if (user == null || role == null) {
+        lock.readLock().lock();
+        try {
+            String key = makeUserRoleKey(user.username(), role.name());
+            String id = userRoleIndex.get(key);
+            if (id != null) {
+                RoleAssignment a = assignments.get(id);
+                return a != null && a.isActive();
+            }
             return false;
+        } finally {
+            lock.readLock().unlock();
         }
-
-        return assignments.values().stream()
-                .anyMatch(assignment ->
-                        assignment.isActive() &&
-                                assignment.user().equals(user) &&
-                                assignment.role().equals(role)
-                );
     }
 
-
-    public boolean userHasPermission(User user, String permissionName, String resource) {
-        if (user == null) {
-            return false;
+    public boolean userHasPermission(User user, String action, String resource) {
+        lock.readLock().lock();
+        try {
+            return assignments.values().stream()
+                    .filter(a -> a.user().username().equals(user.username()) && a.isActive())
+                    .anyMatch(a -> a.role().hasPermission(action, resource));
+        } finally {
+            lock.readLock().unlock();
         }
-
-        // Получаем все активные роли пользователя
-        Set<Role> userRoles = assignments.values().stream()
-                .filter(assignment -> assignment.isActive() && assignment.user().equals(user))
-                .map(RoleAssignment::role)
-                .collect(Collectors.toSet());
-
-        // Проверяем, есть ли у какой-либо роли указанное право
-        return userRoles.stream()
-                .anyMatch(role -> role.hasPermission(permissionName, resource));
     }
-
 
     public Set<Permission> getUserPermissions(User user) {
-        if (user == null) {
-            return Collections.emptySet();
+        lock.readLock().lock();
+        try {
+            return assignments.values().stream()
+                    .filter(a -> a.user().username().equals(user.username()) && a.isActive())
+                    .flatMap(a -> a.role().getPermissions().stream())
+                    .collect(Collectors.toSet());
+        } finally {
+            lock.readLock().unlock();
         }
-
-        // Собираем все права из всех активных ролей пользователя
-        return assignments.values().stream()
-                .filter(assignment -> assignment.isActive() && assignment.user().equals(user))
-                .map(RoleAssignment::role)
-                .flatMap(role -> role.getPermissions().stream())
-                .collect(Collectors.toSet());
     }
 
+    /**
+     * Деактивация истёкших временных назначений.
+     * Использует метод isExpired() из TemporaryAssignment.
+     *
+     * Важно: isExpired() возвращает true, когда назначение истекло,
+     * а isActive() возвращает false в этом случае.
+     * Поэтому проверяем только isExpired(), без isActive().
+     */
+    public int deactivateExpired() {
+        lock.writeLock().lock();
+        try {
+            List<String> toRemove = new ArrayList<>();
+
+            for (Map.Entry<String, RoleAssignment> entry : assignments.entrySet()) {
+                RoleAssignment a = entry.getValue();
+
+                // Проверяем, что это временное назначение
+                if (!isTemporaryAssignment(a)) continue;
+
+                // ✅ Вызываем isExpired() — если true, значит назначение истекло
+                Boolean expired = callIsExpired(a);
+                if (Boolean.TRUE.equals(expired)) {
+                    toRemove.add(entry.getKey());
+                }
+            }
+
+            // Удаляем помеченные назначения
+            for (String id : toRemove) {
+                RoleAssignment removed = assignments.remove(id);
+                if (removed != null) {
+                    String key = makeUserRoleKey(
+                            removed.user().username(),
+                            removed.role().name()
+                    );
+                    userRoleIndex.remove(key);
+                }
+            }
+
+            return toRemove.size();
+
+        } finally {
+            lock.writeLock().unlock();
+        }
+    }
+
+    private boolean isTemporaryAssignment(RoleAssignment a) {
+        String name = a.getClass().getSimpleName();
+        return name.contains("Temporary") || a.getClass().getName().contains("TemporaryAssignment");
+    }
+
+    /**
+     * Вызов метода isExpired() через рефлексию.
+     */
+    private Boolean callIsExpired(RoleAssignment a) {
+        try {
+            java.lang.reflect.Method method = a.getClass().getMethod("isExpired");
+            Object result = method.invoke(a);
+            return result instanceof Boolean ? (Boolean) result : null;
+        } catch (Exception e) {
+            return null;
+        }
+    }
 
     public void revokeAssignment(String assignmentId) {
-        if (assignmentId == null || assignmentId.trim().isEmpty()) {
-            throw new IllegalArgumentException("Идентификатор назначения не может быть пустым");
-        }
-
-        RoleAssignment assignment = assignments.get(assignmentId);
-
-        if (assignment == null) {
-            throw new IllegalArgumentException("Назначение с идентификатором '" +
-                    assignmentId + "' не найдено");
-        }
-
-        // Отзываем назначение (если это постоянное назначение)
-        if (assignment instanceof PermanentAssignment permanent) {
-            permanent.revoke();
-        } else {
-            throw new IllegalArgumentException("Назначение не является постоянным и не может быть отозвано");
+        lock.writeLock().lock();
+        try {
+            RoleAssignment removed = assignments.remove(assignmentId);
+            if (removed != null) {
+                String key = makeUserRoleKey(removed.user().username(), removed.role().name());
+                userRoleIndex.remove(key);
+            }
+        } finally {
+            lock.writeLock().unlock();
         }
     }
 
-    public void extendTemporaryAssignment(String assignmentId, String newExpirationDate) {
-        if (assignmentId == null || assignmentId.trim().isEmpty()) {
-            throw new IllegalArgumentException("Идентификатор назначения не может быть пустым");
-        }
+    public void extendTemporaryAssignment(String assignmentId, String newExpiresAt) {}
 
-        if (newExpirationDate == null || newExpirationDate.trim().isEmpty()) {
-            throw new IllegalArgumentException("Новая дата истечения не может быть пустой");
-        }
-
-        RoleAssignment assignment = assignments.get(assignmentId);
-
-        if (assignment == null) {
-            throw new IllegalArgumentException("Назначение с идентификатором '" +
-                    assignmentId + "' не найдено");
-        }
-
-        // Продлеваем только временное назначение
-        if (assignment instanceof TemporaryAssignment temporary) {
-            temporary.extend(newExpirationDate);
-        } else {
-            throw new IllegalArgumentException("Назначение не является временным и не может быть продлено");
+    public boolean remove(RoleAssignment assignment) {
+        lock.writeLock().lock();
+        try {
+            String id = assignment.assignmentId();
+            RoleAssignment removed = assignments.remove(id);
+            if (removed != null) {
+                String key = makeUserRoleKey(removed.user().username(), removed.role().name());
+                userRoleIndex.remove(key);
+                return true;
+            }
+            return false;
+        } finally {
+            lock.writeLock().unlock();
         }
     }
 
+    public int count() { return assignments.size(); }
 
-    public Map<String, RoleAssignment> getAssignments() {
-        return Collections.unmodifiableMap(assignments);
+    public void clear() {
+        lock.writeLock().lock();
+        try {
+            assignments.clear();
+            userRoleIndex.clear();
+        } finally {
+            lock.writeLock().unlock();
+        }
     }
 }

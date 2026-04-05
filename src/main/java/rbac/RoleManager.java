@@ -1,200 +1,125 @@
 package rbac;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 
+/**
+ * Потокoбезопасный менеджер ролей.
+ */
+public class RoleManager {
 
-public class RoleManager implements Repository<Role> {
+    private final Map<String, Role> roles = new ConcurrentHashMap<>();
+    private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
-    // Хранилище ролей по идентификатору
-    private final Map<String, Role> rolesById = new HashMap<>();
-
-    // Индекс ролей по имени для быстрого поиска
-    private final Map<String, Role> rolesByName = new HashMap<>();
-
-    /**
-     * Добавить роль в менеджер
-     * @param role роль для добавления
-     * @throws IllegalArgumentException если роль с таким именем уже существует
-     */
-    @Override
     public void add(Role role) {
-        if (role == null) {
-            throw new IllegalArgumentException("Роль не может быть null");
+        lock.writeLock().lock();
+        try {
+            if (roles.containsKey(role.name())) {
+                throw new IllegalArgumentException("Role already exists: " + role.name());
+            }
+            roles.put(role.name(), role);
+        } finally {
+            lock.writeLock().unlock();
         }
-
-        String roleName = role.name().toLowerCase();
-
-        if (rolesByName.containsKey(roleName)) {
-            throw new IllegalArgumentException("Роль с именем '" + role.name() + "' уже существует");
-        }
-
-        rolesById.put(role.id(), role);
-        rolesByName.put(roleName, role);
     }
 
-    /**
-     * Удалить роль из менеджера
-     * @param role роль для удаления
-     * @return true если роль была удалена, иначе false
-     */
-    @Override
-    public boolean remove(Role role) {
-        if (role == null) {
-            return false;
+    public boolean exists(String roleName) {
+        lock.readLock().lock();
+        try {
+            return roles.containsKey(roleName);
+        } finally {
+            lock.readLock().unlock();
         }
-
-        Role removedById = rolesById.remove(role.id());
-        if (removedById != null) {
-            rolesByName.remove(removedById.name().toLowerCase());
-            return true;
-        }
-
-        return false;
     }
 
-    /**
-     * Найти роль по идентификатору
-     * @param id идентификатор роли
-     * @return Optional с найденной ролью или пустой Optional
-     */
-    @Override
-    public Optional<Role> findById(String id) {
-        if (id == null || id.trim().isEmpty()) {
-            return Optional.empty();
+    public Optional<Role> findByName(String roleName) {
+        lock.readLock().lock();
+        try {
+            return Optional.ofNullable(roles.get(roleName));
+        } finally {
+            lock.readLock().unlock();
         }
-
-        return Optional.ofNullable(rolesById.get(id));
     }
 
+    // ✅ Оригинал: с параметрами
+    public List<Role> findAll(RoleFilter filter, Comparator<Role> sorter) {
+        lock.readLock().lock();
+        try {
+            List<Role> result = new ArrayList<>(roles.values());
+            if (filter != null) {
+                result = result.stream().filter(filter).collect(Collectors.toList());
+            }
+            if (sorter != null) {
+                result.sort(sorter);
+            }
+            return result;
+        } finally {
+            lock.readLock().unlock();
+        }
+    }
 
-    @Override
+    // ✅ НОВЫЙ: без параметров
     public List<Role> findAll() {
-        return new ArrayList<>(rolesById.values());
+        return findAll(null, null);
     }
 
-
-    @Override
-    public int count() {
-        return rolesById.size();
-    }
-
-
-    @Override
-    public void clear() {
-        rolesById.clear();
-        rolesByName.clear();
-    }
-
-
-    public Optional<Role> findByName(String name) {
-        if (name == null || name.trim().isEmpty()) {
-            return Optional.empty();
-        }
-
-        return Optional.ofNullable(rolesByName.get(name.toLowerCase()));
-    }
-
-
+    // ✅ НОВЫЙ: только фильтр
     public List<Role> findByFilter(RoleFilter filter) {
-        if (filter == null) {
-            return new ArrayList<>(rolesById.values());
-        }
+        return findAll(filter, null);
+    }
 
-        return rolesById.values().stream()
+    // ✅ НОВЫЙ: параллельная фильтрация
+    public List<Role> findByFilterParallel(RoleFilter filter) {
+        return roles.values().parallelStream()
                 .filter(filter)
                 .collect(Collectors.toList());
     }
 
-    public List<Role> findAll(RoleFilter filter, Comparator<Role> sorter) {
-        if (filter == null && sorter == null) {
-            return new ArrayList<>(rolesById.values());
-        }
-
-        List<Role> result = rolesById.values().stream()
-                .filter(filter != null ? filter : role -> true)
-                .collect(Collectors.toList());
-
-        if (sorter != null) {
-            result.sort(sorter);
-        }
-
-        return result;
-    }
-
-    /**
-     * Проверить существование роли с указанным именем
-     * @param name имя роли
-     * @return true если роль существует, иначе false
-     */
-    public boolean exists(String name) {
-        if (name == null || name.trim().isEmpty()) {
-            return false;
-        }
-
-        return rolesByName.containsKey(name.toLowerCase());
-    }
-
-    /**
-     * Добавить право доступа к роли
-     * @param roleName имя роли
-     * @param permission право доступа для добавления
-     * @throws IllegalArgumentException если роль не найдена или право уже существует
-     */
     public void addPermissionToRole(String roleName, Permission permission) {
-        if (roleName == null || roleName.trim().isEmpty()) {
-            throw new IllegalArgumentException("Имя роли не может быть пустым");
+        lock.writeLock().lock();
+        try {
+            Role role = roles.get(roleName);
+            if (role != null) {
+                role.addPermission(permission);
+            }
+        } finally {
+            lock.writeLock().unlock();
         }
-
-        if (permission == null) {
-            throw new IllegalArgumentException("Право доступа не может быть null");
-        }
-
-        Role role = rolesByName.get(roleName.toLowerCase());
-
-        if (role == null) {
-            throw new IllegalArgumentException("Роль с именем '" + roleName + "' не найдена");
-        }
-
-        // Добавляем право (внутри роли уже есть проверка на дубликаты)
-        role.addPermission(permission);
     }
 
-
-    public void removePermissionFromRole(String roleName, Permission permission) {
-        if (roleName == null || roleName.trim().isEmpty()) {
-            throw new IllegalArgumentException("Имя роли не может быть пустым");
+    public List<Role> findRolesWithPermission(String action, String resource) {
+        lock.readLock().lock();
+        try {
+            return roles.values().stream()
+                    .filter(role -> role.hasPermission(action, resource))
+                    .collect(Collectors.toList());
+        } finally {
+            lock.readLock().unlock();
         }
-
-        if (permission == null) {
-            throw new IllegalArgumentException("Право доступа не может быть null");
-        }
-
-        Role role = rolesByName.get(roleName.toLowerCase());
-
-        if (role == null) {
-            throw new IllegalArgumentException("Роль с именем '" + roleName + "' не найдена");
-        }
-
-
-        role.removePermission(permission);
     }
 
-    public List<Role> findRolesWithPermission(String permissionName, String resource) {
-        if (permissionName == null || permissionName.trim().isEmpty()) {
-            throw new IllegalArgumentException("Имя права доступа не может быть пустым");
+    public boolean remove(Role role) {
+        lock.writeLock().lock();
+        try {
+            return roles.remove(role.name()) != null;
+        } finally {
+            lock.writeLock().unlock();
         }
-
-        if (resource == null || resource.trim().isEmpty()) {
-            throw new IllegalArgumentException("Ресурс права доступа не может быть пустым");
-        }
-
-        return rolesById.values().stream()
-                .filter(role -> role.hasPermission(permissionName, resource))
-                .collect(Collectors.toList());
     }
 
-    public Map<String, Role> getRoles() {
-        return Collections.unmodifiableMap(rolesById);
+    public int count() {
+        return roles.size();
+    }
+
+    public void clear() {
+        lock.writeLock().lock();
+        try {
+            roles.clear();
+        } finally {
+            lock.writeLock().unlock();
+        }
     }
 }

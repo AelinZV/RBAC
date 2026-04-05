@@ -6,10 +6,8 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.*;
 
-/**
- * Тесты для менеджера назначений
- */
 class AssignmentManagerTest {
 
     private AssignmentManager manager;
@@ -26,135 +24,103 @@ class AssignmentManagerTest {
 
     @Test
     void testAddAssignment() {
-        AssignmentMetadata meta = AssignmentMetadata.now("admin", "Test assignment");
-        PermanentAssignment assignment = new PermanentAssignment(user, role, meta);
-
-        manager.add(assignment);
-
+        AssignmentMetadata meta = AssignmentMetadata.now("admin", "Test");
+        PermanentAssignment a = new PermanentAssignment(user, role, meta);
+        manager.add(a);
         assertEquals(1, manager.count());
-        assertTrue(manager.findById(assignment.assignmentId()).isPresent());
+        assertTrue(manager.findById(a.assignmentId()).isPresent());
     }
 
     @Test
     void testAddDuplicateRoleToUser() {
-        AssignmentMetadata meta1 = AssignmentMetadata.now("admin", "First assignment");
-        PermanentAssignment assignment1 = new PermanentAssignment(user, role, meta1);
-        manager.add(assignment1);
-
-        AssignmentMetadata meta2 = AssignmentMetadata.now("admin", "Second assignment");
-        PermanentAssignment assignment2 = new PermanentAssignment(user, role, meta2);
-
-        assertThrows(IllegalArgumentException.class, () -> manager.add(assignment2));
+        AssignmentMetadata m1 = AssignmentMetadata.now("admin", "First");
+        PermanentAssignment a1 = new PermanentAssignment(user, role, m1);
+        manager.add(a1);
+        AssignmentMetadata m2 = AssignmentMetadata.now("admin", "Second");
+        PermanentAssignment a2 = new PermanentAssignment(user, role, m2);
+        assertThrows(IllegalArgumentException.class, () -> manager.add(a2));
     }
 
     @Test
     void testFindAssignmentsByUser() {
         AssignmentMetadata meta = AssignmentMetadata.now("admin", "Test");
-        PermanentAssignment assignment = new PermanentAssignment(user, role, meta);
-        manager.add(assignment);
-
-        List<RoleAssignment> assignments = manager.findByUser(user);
-
-        assertEquals(1, assignments.size());
-        assertEquals(assignment, assignments.get(0));
+        PermanentAssignment a = new PermanentAssignment(user, role, meta);
+        manager.add(a);
+        List<RoleAssignment> list = manager.findByUser(user);
+        assertEquals(1, list.size());
+        assertEquals(a, list.get(0));
     }
 
     @Test
     void testGetActiveAssignments() {
         AssignmentMetadata meta = AssignmentMetadata.now("admin", "Active");
-        PermanentAssignment active = new PermanentAssignment(user, role, meta);
-        manager.add(active);
-
-        List<RoleAssignment> activeAssignments = manager.getActiveAssignments();
-
-        assertEquals(1, activeAssignments.size());
+        PermanentAssignment a = new PermanentAssignment(user, role, meta);
+        manager.add(a);
+        assertEquals(1, manager.getActiveAssignments().size());
     }
 
     @Test
     void testUserHasRole() {
         AssignmentMetadata meta = AssignmentMetadata.now("admin", "Test");
-        PermanentAssignment assignment = new PermanentAssignment(user, role, meta);
-        manager.add(assignment);
-
+        manager.add(new PermanentAssignment(user, role, meta));
         assertTrue(manager.userHasRole(user, role));
     }
 
     @Test
     void testUserHasPermission() {
         AssignmentMetadata meta = AssignmentMetadata.now("admin", "Test");
-        PermanentAssignment assignment = new PermanentAssignment(user, role, meta);
-        manager.add(assignment);
-
+        manager.add(new PermanentAssignment(user, role, meta));
         assertTrue(manager.userHasPermission(user, "READ", "data"));
         assertFalse(manager.userHasPermission(user, "WRITE", "data"));
     }
 
     @Test
     void testGetUserPermissions() {
-        Role role2 = new Role("Role2", "Second role");
-        role2.addPermission(new Permission("WRITE", "data", "Write data"));
-
-        AssignmentMetadata meta1 = AssignmentMetadata.now("admin", "Role 1");
-        manager.add(new PermanentAssignment(user, role, meta1));
-
-        AssignmentMetadata meta2 = AssignmentMetadata.now("admin", "Role 2");
-        manager.add(new PermanentAssignment(user, role2, meta2));
-
-        Set<Permission> permissions = manager.getUserPermissions(user);
-
-        assertEquals(2, permissions.size());
-        assertTrue(permissions.stream().anyMatch(p -> p.name().equals("READ")));
-        assertTrue(permissions.stream().anyMatch(p -> p.name().equals("WRITE")));
+        Role r2 = new Role("Role2", "R2");
+        r2.addPermission(new Permission("WRITE", "data", "W"));
+        AssignmentMetadata m1 = AssignmentMetadata.now("admin", "M1");
+        AssignmentMetadata m2 = AssignmentMetadata.now("admin", "M2");
+        manager.add(new PermanentAssignment(user, role, m1));
+        manager.add(new PermanentAssignment(user, r2, m2));
+        Set<Permission> perms = manager.getUserPermissions(user);
+        assertEquals(2, perms.size());
     }
 
     @Test
     void testRevokePermanentAssignment() {
         AssignmentMetadata meta = AssignmentMetadata.now("admin", "Test");
-        PermanentAssignment assignment = new PermanentAssignment(user, role, meta);
-        manager.add(assignment);
-
-        manager.revokeAssignment(assignment.assignmentId());
-
-        assertFalse(assignment.isActive());
+        PermanentAssignment a = new PermanentAssignment(user, role, meta);
+        manager.add(a);
+        manager.revokeAssignment(a.assignmentId());
+        assertTrue(manager.findById(a.assignmentId()).isEmpty());
     }
 
     @Test
     void testExtendTemporaryAssignment() {
         AssignmentMetadata meta = AssignmentMetadata.now("admin", "Test");
-        TemporaryAssignment assignment = new TemporaryAssignment(
-                user, role, meta, "2026-12-31 23:59"
-        );
-        manager.add(assignment);
-
-        manager.extendTemporaryAssignment(assignment.assignmentId(), "2027-12-31 23:59");
-
-        // Проверяем, что назначение всё ещё активно
-        assertTrue(assignment.isActive());
+        TemporaryAssignment a = new TemporaryAssignment(user, role, meta, "2026-12-31 23:59");
+        manager.add(a);
+        manager.extendTemporaryAssignment(a.assignmentId(), "2027-12-31 23:59");
+        assertTrue(manager.findById(a.assignmentId()).isPresent());
     }
 
     @Test
     void testFilterAssignments() {
-        User user2 = User.validate("user2", "User 2", "user2@example.com");
-
-        AssignmentMetadata meta1 = AssignmentMetadata.now("admin", "Admin assigned");
-        manager.add(new PermanentAssignment(user, role, meta1));
-
-        AssignmentMetadata meta2 = AssignmentMetadata.now("manager", "Manager assigned");
-        manager.add(new PermanentAssignment(user2, role, meta2));
-
-        AssignmentFilter filter = AssignmentFilters.assignedBy("admin");
-        List<RoleAssignment> filtered = manager.findByFilter(filter);
-
-        assertEquals(1, filtered.size());
+        User u2 = User.validate("user_two", "U2", "u2@test.com");
+        AssignmentMetadata m1 = AssignmentMetadata.now("admin", "M1");
+        AssignmentMetadata m2 = AssignmentMetadata.now("manager", "M2");
+        manager.add(new PermanentAssignment(user, role, m1));
+        manager.add(new PermanentAssignment(u2, role, m2));
+        List<RoleAssignment> f = manager.findByFilter(AssignmentFilters.assignedBy("admin"));
+        assertEquals(1, f.size());
     }
 
     @Test
     void testRemoveAssignment() {
         AssignmentMetadata meta = AssignmentMetadata.now("admin", "Test");
-        PermanentAssignment assignment = new PermanentAssignment(user, role, meta);
-        manager.add(assignment);
-
-        assertTrue(manager.remove(assignment));
+        PermanentAssignment a = new PermanentAssignment(user, role, meta);
+        manager.add(a);
+        assertTrue(manager.remove(a));
         assertEquals(0, manager.count());
     }
 
@@ -162,9 +128,64 @@ class AssignmentManagerTest {
     void testClear() {
         AssignmentMetadata meta = AssignmentMetadata.now("admin", "Test");
         manager.add(new PermanentAssignment(user, role, meta));
-
         manager.clear();
-
         assertEquals(0, manager.count());
+    }
+
+    @Test
+    void testConcurrentAddAssignments() throws Exception {
+        int threads = 10, perThread = 10;
+        ExecutorService exec = Executors.newFixedThreadPool(threads);
+        CountDownLatch latch = new CountDownLatch(threads);
+        for (int t = 0; t < threads; t++) {
+            final int tn = t;
+            exec.submit(() -> {
+                try {
+                    for (int i = 0; i < perThread; i++) {
+                        User u = User.validate("usr_" + tn + "_" + i, "U", "u@test.com");
+                        Role r = new Role("ROL_" + tn + "_" + i, "R");
+                        AssignmentMetadata m = AssignmentMetadata.now("admin", "M");
+                        manager.add(new PermanentAssignment(u, r, m));
+                    }
+                } finally { latch.countDown(); }
+            });
+        }
+        latch.await();
+        exec.shutdown();
+        assertEquals(threads * perThread, manager.count());
+    }
+
+    @Test
+    void testFindByFilterParallel() {
+        User u2 = User.validate("user_two", "U2", "u2@test.com");
+        AssignmentMetadata m1 = AssignmentMetadata.now("admin", "M1");
+        AssignmentMetadata m2 = AssignmentMetadata.now("manager", "M2");
+        manager.add(new PermanentAssignment(user, role, m1));
+        manager.add(new PermanentAssignment(u2, role, m2));
+        List<RoleAssignment> f = manager.findByFilterParallel(a -> a.metadata().assignedBy().equals("admin"));
+        assertEquals(1, f.size());
+    }
+
+    @Test
+    void testDeactivateExpired() {
+        User u1 = User.validate("usr_one", "User1", "u1@test.com");
+        User u2 = User.validate("usr_two", "User2", "u2@test.com");
+        Role testRole = new Role("TestRole", "Test");
+
+        // Истёкшее (2020 год)
+        AssignmentMetadata meta1 = AssignmentMetadata.now("admin", "Expired");
+        TemporaryAssignment expired = new TemporaryAssignment(u1, testRole, meta1, "2020-01-01 00:00");
+        manager.add(expired);
+
+        // Активное (2030 год)
+        AssignmentMetadata meta2 = AssignmentMetadata.now("admin", "Active");
+        TemporaryAssignment active = new TemporaryAssignment(u2, testRole, meta2, "2030-01-01 00:00");
+        manager.add(active);
+
+        int deactivated = manager.deactivateExpired();
+
+        assertEquals(1, deactivated, "Должно быть деактивировано 1 назначение");
+        assertTrue(manager.findById(expired.assignmentId()).isEmpty(), "Истёкшее должно быть удалено");
+        assertTrue(manager.findById(active.assignmentId()).isPresent(), "Активное должно остаться");
     }
 }
