@@ -1,155 +1,126 @@
 package rbac;
 
 import java.util.*;
-import java.util.function.Predicate;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 
-public class UserManager implements Repository<User> {
+/**
+ * Потокoбезопасный менеджер пользователей.
+ */
+public class UserManager {
 
-    // Хранилище пользователей: ключ - username, значение - объект пользователя
-    private final Map<String, User> users = new HashMap<>();
+    private final Map<String, User> users = new ConcurrentHashMap<>();
+    private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
-    @Override
     public void add(User user) {
-        if (user == null) {
-            throw new IllegalArgumentException("Пользователь не может быть null");
+        lock.writeLock().lock();
+        try {
+            if (users.containsKey(user.username())) {
+                throw new IllegalArgumentException("User already exists: " + user.username());
+            }
+            users.put(user.username(), user);
+        } finally {
+            lock.writeLock().unlock();
         }
+    }
 
-        String username = user.username().toLowerCase();
-
-        if (users.containsKey(username)) {
-            throw new IllegalArgumentException("Пользователь с именем '" + username + "' уже существует");
+    public boolean exists(String username) {
+        lock.readLock().lock();
+        try {
+            return users.containsKey(username);
+        } finally {
+            lock.readLock().unlock();
         }
-
-        users.put(username, user);
     }
-
-    @Override
-    public boolean remove(User user) {
-        if (user == null) {
-            return false;
-        }
-
-        return users.remove(user.username().toLowerCase()) != null;
-    }
-
-
-
-    @Override
-    public Optional<User> findById(String id) {
-        if (id == null || id.trim().isEmpty()) {
-            return Optional.empty();
-        }
-
-        return Optional.ofNullable(users.get(id.toLowerCase()));
-    }
-
-
-    @Override
-    public List<User> findAll() {
-        return new ArrayList<>(users.values());
-    }
-
-    @Override
-    public int count() {
-        return users.size();
-    }
-
-    @Override
-    public void clear() {
-        users.clear();
-    }
-
 
     public Optional<User> findByUsername(String username) {
-        if (username == null || username.trim().isEmpty()) {
-            return Optional.empty();
+        lock.readLock().lock();
+        try {
+            return Optional.ofNullable(users.get(username));
+        } finally {
+            lock.readLock().unlock();
         }
-
-        return Optional.ofNullable(users.get(username.toLowerCase()));
     }
-
 
     public Optional<User> findByEmail(String email) {
-        if (email == null || email.trim().isEmpty()) {
-            return Optional.empty();
+        lock.readLock().lock();
+        try {
+            return users.values().stream()
+                    .filter(u -> u.email().equalsIgnoreCase(email))
+                    .findFirst();
+        } finally {
+            lock.readLock().unlock();
         }
-
-        String emailLower = email.toLowerCase();
-        return users.values().stream()
-                .filter(user -> user.email().equals(emailLower))
-                .findFirst();
     }
 
-
-    public List<User> findByFilter(UserFilter filter) {
-        if (filter == null) {
-            return new ArrayList<>(users.values());
+    // ✅ Оригинал: с параметрами (для обратной совместимости)
+    public List<User> findAll(UserFilter filter, Comparator<User> sorter) {
+        lock.readLock().lock();
+        try {
+            List<User> result = new ArrayList<>(users.values());
+            if (filter != null) {
+                result = result.stream().filter(filter).collect(Collectors.toList());
+            }
+            if (sorter != null) {
+                result.sort(sorter);
+            }
+            return result;
+        } finally {
+            lock.readLock().unlock();
         }
+    }
 
-        return users.values().stream()
+    // ✅ НОВЫЙ: без параметров (для ReportGenerator и других)
+    public List<User> findAll() {
+        return findAll(null, null);
+    }
+
+    // ✅ НОВЫЙ: только фильтр (для Main.java:313)
+    public List<User> findByFilter(UserFilter filter) {
+        return findAll(filter, null);
+    }
+
+    // ✅ НОВЫЙ: параллельная фильтрация (требование задания)
+    public List<User> findByFilterParallel(UserFilter filter) {
+        return users.values().parallelStream()
                 .filter(filter)
                 .collect(Collectors.toList());
     }
 
-
-    public List<User> findAll(UserFilter filter, Comparator<User> sorter) {
-        if (filter == null && sorter == null) {
-            return new ArrayList<>(users.values());
-        }
-
-        List<User> result = users.values().stream()
-                .filter(filter != null ? filter : user -> true)
-                .collect(Collectors.toList());
-
-        if (sorter != null) {
-            result.sort(sorter);
-        }
-
-        return result;
-    }
-
-    /**
-     * Проверить существование пользователя с указанным именем
-     * @param username имя пользователя
-     * @return true если пользователь существует, иначе false
-     */
-    public boolean exists(String username) {
-        if (username == null || username.trim().isEmpty()) {
-            return false;
-        }
-
-        return users.containsKey(username.toLowerCase());
-    }
-
-    /**
-     * Обновить данные пользователя
-     * @param username имя пользователя для обновления
-     * @param newFullName новое полное имя
-     * @param newEmail новый адрес электронной почты
-     * @throws IllegalArgumentException если пользователь не найден или данные невалидны
-     */
     public void update(String username, String newFullName, String newEmail) {
-        if (username == null || username.trim().isEmpty()) {
-            throw new IllegalArgumentException("Имя пользователя не может быть пустым");
+        lock.writeLock().lock();
+        try {
+            User existing = users.get(username);
+            if (existing != null) {
+                User updated = User.validate(username, newFullName, newEmail);
+                users.put(username, updated);
+            }
+        } finally {
+            lock.writeLock().unlock();
         }
-
-        String usernameLower = username.toLowerCase();
-        User existingUser = users.get(usernameLower);
-
-        if (existingUser == null) {
-            throw new IllegalArgumentException("Пользователь с именем '" + username + "' не найден");
-        }
-
-        // Валидация новых данных через метод validate
-        User updatedUser = User.validate(username, newFullName, newEmail);
-
-        // Обновляем пользователя в хранилище
-        users.put(usernameLower, updatedUser);
     }
 
+    public boolean remove(User user) {
+        lock.writeLock().lock();
+        try {
+            return users.remove(user.username()) != null;
+        } finally {
+            lock.writeLock().unlock();
+        }
+    }
 
-    public Map<String, User> getUsers() {
-        return Collections.unmodifiableMap(users);
+    public int count() {
+        return users.size();
+    }
+
+    public void clear() {
+        lock.writeLock().lock();
+        try {
+            users.clear();
+        } finally {
+            lock.writeLock().unlock();
+        }
     }
 }

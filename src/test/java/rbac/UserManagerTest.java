@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.List;
+import java.util.concurrent.*;
 
 /**
  * Тесты для менеджера пользователей
@@ -110,5 +111,113 @@ class UserManagerTest {
         manager.clear();
 
         assertEquals(0, manager.count());
+    }
+
+    // ✏️ НОВЫЕ ТЕСТЫ НА ПОТОКОБЕЗОПАСНОСТЬ
+
+    @Test
+    void testConcurrentAddUsers() throws Exception {
+        int threadCount = 10;
+        int usersPerThread = 10;
+        ExecutorService executor = Executors.newFixedThreadPool(threadCount);
+        CountDownLatch latch = new CountDownLatch(threadCount);
+        ConcurrentHashMap<String, Throwable> errors = new ConcurrentHashMap<>();
+
+        for (int t = 0; t < threadCount; t++) {
+            final int threadNum = t;
+            executor.submit(() -> {
+                try {
+                    for (int i = 0; i < usersPerThread; i++) {
+                        User user = User.validate(
+                                "user_" + threadNum + "_" + i,
+                                "User " + threadNum + "_" + i,
+                                "user" + threadNum + "_" + i + "@test.com"
+                        );
+                        manager.add(user);
+                    }
+                } catch (Throwable e) {
+                    errors.put("thread-" + threadNum, e);
+                } finally {
+                    latch.countDown();
+                }
+            });
+        }
+
+        latch.await();
+        executor.shutdown();
+
+        assertTrue(errors.isEmpty(), "Errors: " + errors);
+        assertEquals(threadCount * usersPerThread, manager.count());
+    }
+
+    @Test
+    void testConcurrentReadAndWrite() throws Exception {
+        // Создаём начальных пользователей
+        for (int i = 0; i < 20; i++) {
+            manager.add(User.validate("init_" + i, "Init " + i, "init" + i + "@test.com"));
+        }
+
+        ExecutorService executor = Executors.newFixedThreadPool(8);
+        CountDownLatch latch = new CountDownLatch(8);
+        ConcurrentHashMap<String, Integer> errors = new ConcurrentHashMap<>();
+
+        // Потоки на чтение
+        for (int i = 0; i < 4; i++) {
+            executor.submit(() -> {
+                try {
+                    for (int j = 0; j < 50; j++) {
+                        manager.findAll(null, null);
+                        manager.findByFilterParallel(u -> u.username().contains("init"));
+                        manager.findByUsername("init_5");
+                    }
+                } catch (Exception e) {
+                    errors.merge("READ", 1, Integer::sum);
+                } finally {
+                    latch.countDown();
+                }
+            });
+        }
+
+        // Потоки на запись
+        for (int i = 0; i < 4; i++) {
+            final int threadNum = i;
+            executor.submit(() -> {
+                try {
+                    for (int j = 0; j < 10; j++) {
+                        User user = User.validate(
+                                "concurrent_" + threadNum + "_" + j,
+                                "Concurrent " + j,
+                                "conc" + threadNum + "_" + j + "@test.com"
+                        );
+                        manager.add(user);
+                    }
+                } catch (Exception e) {
+                    errors.merge("WRITE", 1, Integer::sum);
+                } finally {
+                    latch.countDown();
+                }
+            });
+        }
+
+        latch.await();
+        executor.shutdown();
+
+        assertTrue(errors.isEmpty(), "Errors: " + errors);
+        assertEquals(60, manager.count());
+    }
+
+    @Test
+    void testFindByFilterParallel() {
+        manager.add(User.validate("alice", "Alice", "alice@test.com"));
+        manager.add(User.validate("bob", "Bob", "bob@test.com"));
+        manager.add(User.validate("charlie", "Charlie", "charlie@test.com"));
+
+        List<User> filtered = manager.findByFilterParallel(
+                u -> u.username().startsWith("a") || u.username().startsWith("b")
+        );
+
+        assertEquals(2, filtered.size());
+        assertTrue(filtered.stream().anyMatch(u -> u.username().equals("alice")));
+        assertTrue(filtered.stream().anyMatch(u -> u.username().equals("bob")));
     }
 }

@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.List;
+import java.util.concurrent.*;
 
 /**
  * Тесты для менеджера ролей
@@ -131,5 +132,51 @@ class RoleManagerTest {
         manager.clear();
 
         assertEquals(0, manager.count());
+    }
+
+    // ✏️ НОВЫЕ ТЕСТЫ НА ПОТОКОБЕЗОПАСНОСТЬ
+
+    @Test
+    void testConcurrentAddRoles() throws Exception {
+        int threadCount = 10;
+        int rolesPerThread = 10;
+        ExecutorService executor = Executors.newFixedThreadPool(threadCount);
+        CountDownLatch latch = new CountDownLatch(threadCount);
+
+        for (int t = 0; t < threadCount; t++) {
+            final int threadNum = t;
+            executor.submit(() -> {
+                try {
+                    for (int i = 0; i < rolesPerThread; i++) {
+                        Role role = new Role("ROLE_" + threadNum + "_" + i, "Role " + i);
+                        manager.add(role);
+                    }
+                } finally {
+                    latch.countDown();
+                }
+            });
+        }
+
+        latch.await();
+        executor.shutdown();
+
+        assertEquals(threadCount * rolesPerThread, manager.count());
+    }
+
+    @Test
+    void testFindByFilterParallel() {
+        manager.add(new Role("ADMIN", "Admin"));    // 5 символов
+        manager.add(new Role("USER", "User"));       // 4 символа ✓
+        manager.add(new Role("GUEST", "Guest"));     // 5 символов
+        manager.add(new Role("OP", "Operator"));     // 2 символа ✓
+
+        List<Role> filtered = manager.findByFilterParallel(
+                r -> r.name().length() <= 4
+        );
+
+
+        assertEquals(2, filtered.size());
+        assertTrue(filtered.stream().anyMatch(r -> r.name().equals("USER")));
+        assertTrue(filtered.stream().anyMatch(r -> r.name().equals("OP")));
     }
 }
