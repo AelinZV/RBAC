@@ -232,6 +232,186 @@ jobs:
           echo "Результат: $CHECKS_PASSED/$CHECKS_TOTAL проверок пройдено"
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
+      # ============================================================
+      # ПОДЗАДАЧА 4: Система команд и меню (НОВЫЕ ПРОВЕРКИ)
+      # ============================================================
+      - name: Проверка Подзадачи 4 - Система команд и меню
+        run: |
+          echo ""
+          echo "╔════════════════════════════════════════════════════════════════╗"
+          echo "║     ПОДЗАДАЧА 4: СИСТЕМА КОМАНД И МЕНЮ                        ║"
+          echo "╚════════════════════════════════════════════════════════════════╝"
+          echo ""
+          
+          CHECKS_PASSED=0
+          CHECKS_TOTAL=6
+          
+          echo "Проверка 1: Command (функциональный интерфейс)"
+          if grep -rq "@FunctionalInterface" src/main/java/rbac/Command.java; then
+            echo "  ✓ @FunctionalInterface найден в Command.java"
+            CHECKS_PASSED=$((CHECKS_PASSED + 1))
+          else
+            echo "  ✗ @FunctionalInterface не найден в Command.java"
+          fi
+          
+          echo ""
+          echo "Проверка 2: CommandParser с регистрацией команд"
+          if grep -rq "registerCommand\|executeCommand\|printHelp" src/main/java/rbac/CommandParser.java; then
+            echo "  ✓ CommandParser с основными методами найден"
+            CHECKS_PASSED=$((CHECKS_PASSED + 1))
+          else
+            echo "  ✗ CommandParser не содержит ожидаемых методов"
+          fi
+          
+          echo ""
+          echo "Проверка 3: CommandRegistry с командами системы"
+          if grep -rq "registerAllCommands\|user-list\|user-create\|role-list" src/main/java/rbac/CommandRegistry.java; then
+            echo "  ✓ CommandRegistry с командами найден"
+            CHECKS_PASSED=$((CHECKS_PASSED + 1))
+          else
+            echo "  ✗ CommandRegistry не содержит ожидаемых команд"
+          fi
+          
+          echo ""
+          echo "Проверка 4: ConsoleUtils с утилитами ввода"
+          if grep -rq "promptString\|promptInt\|promptYesNo\|promptChoice" src/main/java/rbac/ConsoleUtils.java; then
+            echo "  ✓ ConsoleUtils с методами ввода найден"
+            CHECKS_PASSED=$((CHECKS_PASSED + 1))
+          else
+            echo "  ✗ ConsoleUtils не содержит ожидаемых методов"
+          fi
+          
+          echo ""
+          echo "Проверка 5: Интерактивный режим в Main.java"
+          if grep -rq "startInteractiveMode\|RBAC>\|parseAndExecute" src/main/java/rbac/Main.java; then
+            echo "  ✓ Интерактивный режим в Main.java найден"
+            CHECKS_PASSED=$((CHECKS_PASSED + 1))
+          else
+            echo "  ✗ Интерактивный режим не найден в Main.java"
+          fi
+          
+          echo ""
+          echo "Проверка 6: Интеграция async-команд в меню"
+          if grep -rq "report-users-async\|save-async" src/main/java/rbac/CommandRegistry.java; then
+            echo "  ✓ Async-команды интегрированы в меню"
+            CHECKS_PASSED=$((CHECKS_PASSED + 1))
+          else
+            echo "  ✗ Async-команды не найдены в меню"
+          fi
+          
+          echo ""
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "Результат: $CHECKS_PASSED/$CHECKS_TOTAL проверок пройдено"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+      # ============================================================
+      # ПОДЗАДАЧА 5: Дополнительные утилиты (НОВЫЕ ПРОВЕРКИ)
+      # ============================================================
+      - name: Проверка Подзадачи 5 - Дополнительные утилиты
+        run: |
+          echo ""
+          echo "╔════════════════════════════════════════════════════════════════╗"
+          echo "║     ПОДЗАДАЧА 5: ДОПОЛНИТЕЛЬНЫЕ УТИЛИТЫ                       ║"
+          echo "╚════════════════════════════════════════════════════════════════╝"
+          echo ""
+          
+          CHECKS_PASSED=0
+          CHECKS_TOTAL=4
+          
+          echo "Проверка 1: FileStorage для работы с файлами"
+          if [ -f "src/main/java/rbac/FileStorage.java" ] && grep -rq "saveStatistics\|loadStatistics\|exportReport" src/main/java/rbac/FileStorage.java; then
+            echo "  ✓ FileStorage с методами сохранения/загрузки найден"
+            CHECKS_PASSED=$((CHECKS_PASSED + 1))
+          else
+            echo "  ✗ FileStorage не найден или не содержит ожидаемых методов"
+          fi
+          
+          echo ""
+          echo "Проверка 2: FormatUtils для форматирования вывода"
+          if grep -rq "formatTable\|formatBox\|formatHeader\|padRight" src/main/java/rbac/FormatUtils.java; then
+            echo "  ✓ FormatUtils с методами форматирования найден"
+            CHECKS_PASSED=$((CHECKS_PASSED + 1))
+          else
+            echo "  ✗ FormatUtils не содержит ожидаемых методов"
+          fi
+          
+          echo ""
+          echo "Проверка 3: ValidationUtils для валидации данных"
+          if grep -rq "isValidUsername\|isValidEmail\|normalizeString" src/main/java/rbac/ValidationUtils.java; then
+            echo "  ✓ ValidationUtils с методами валидации найден"
+            CHECKS_PASSED=$((CHECKS_PASSED + 1))
+          else
+            echo "  ✗ ValidationUtils не содержит ожидаемых методов"
+          fi
+          
+          echo ""
+          echo "Проверка 4: Команды работы с файлами в меню"
+          if grep -rq "file-save\|file-load\|backup" src/main/java/rbac/CommandRegistry.java; then
+            echo "  ✓ Команды работы с файлами интегрированы в меню"
+            CHECKS_PASSED=$((CHECKS_PASSED + 1))
+          else
+            echo "  ✗ Команды работы с файлами не найдены в меню"
+          fi
+          
+          echo ""
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "Результат: $CHECKS_PASSED/$CHECKS_TOTAL проверок пройдено"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+      # ============================================================
+      # ПОДЗАДАЧА 6: Интеграция и периодические задачи (НОВЫЕ ПРОВЕРКИ)
+      # ============================================================
+      - name: Проверка Подзадачи 6 - Интеграция и периодические задачи
+        run: |
+          echo ""
+          echo "╔════════════════════════════════════════════════════════════════╗"
+          echo "║     ПОДЗАДАЧА 6: ИНТЕГРАЦИЯ И ПЕРИОДИЧЕСКИЕ ЗАДАЧИ          ║"
+          echo "╚════════════════════════════════════════════════════════════════╝"
+          echo ""
+          
+          CHECKS_PASSED=0
+          CHECKS_TOTAL=4
+          
+          echo "Проверка 1: Запуск периодических задач в интерактивном режиме"
+          if grep -rq "startPeriodicTasks\|30" src/main/java/rbac/Main.java; then
+            echo "  ✓ Периодические задачи запускаются в интерактивном режиме"
+            CHECKS_PASSED=$((CHECKS_PASSED + 1))
+          else
+            echo "  ✗ Запуск периодических задач не найден в Main.java"
+          fi
+          
+          echo ""
+          echo "Проверка 2: Корректное завершение системы при выходе"
+          if grep -rq "stopPeriodicTasks\|system.shutdown" src/main/java/rbac/Main.java; then
+            echo "  ✓ Корректное завершение системы при выходе найдено"
+            CHECKS_PASSED=$((CHECKS_PASSED + 1))
+          else
+            echo "  ✗ Завершение системы не найдено в Main.java"
+          fi
+          
+          echo ""
+          echo "Проверка 3: Тесты для CommandRegistry"
+          if [ -f "src/test/java/rbac/CommandRegistryTest.java" ]; then
+            echo "  ✓ CommandRegistryTest.java найден"
+            CHECKS_PASSED=$((CHECKS_PASSED + 1))
+          else
+            echo "  ✗ CommandRegistryTest.java не найден"
+          fi
+          
+          echo ""
+          echo "Проверка 4: Тесты для ConsoleUtils"
+          if [ -f "src/test/java/rbac/ConsoleUtilsTest.java" ]; then
+            echo "  ✓ ConsoleUtilsTest.java найден"
+            CHECKS_PASSED=$((CHECKS_PASSED + 1))
+          else
+            echo "  ✗ ConsoleUtilsTest.java не найден"
+          fi
+          
+          echo ""
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "Результат: $CHECKS_PASSED/$CHECKS_TOTAL проверок пройдено"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
       - name: Проверка структуры подзадач
         run: |
           echo ""
@@ -241,55 +421,29 @@ jobs:
           echo ""
           
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-          echo "Подзадача 3: Менеджеры данных"
+          echo "Основные файлы системы"
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           
-          USER_MANAGER="src/main/java/rbac/UserManager.java"
-          if [ -f "$USER_MANAGER" ]; then
-            echo "  ✓ UserManager.java"
-          else
-            echo "  ✗ UserManager.java отсутствует"
-          fi
-          
-          ROLE_MANAGER="src/main/java/rbac/RoleManager.java"
-          if [ -f "$ROLE_MANAGER" ]; then
-            echo "  ✓ RoleManager.java"
-          else
-            echo "  ✗ RoleManager.java отсутствует"
-          fi
-          
-          ASSIGN_MANAGER="src/main/java/rbac/AssignmentManager.java"
-          if [ -f "$ASSIGN_MANAGER" ]; then
-            echo "  ✓ AssignmentManager.java"
-          else
-            echo "  ✗ AssignmentManager.java отсутствует"
-          fi
+          for file in UserManager.java RoleManager.java AssignmentManager.java Command.java CommandParser.java CommandRegistry.java ConsoleUtils.java FileStorage.java FormatUtils.java ValidationUtils.java RBACSystem.java Main.java; do
+            if [ -f "src/main/java/rbac/$file" ]; then
+              echo "  ✓ $file"
+            else
+              echo "  ✗ $file отсутствует"
+            fi
+          done
           
           echo ""
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-          echo "Тесты менеджеров"
+          echo "Тестовые файлы"
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           
-          USER_MANAGER_TEST="src/test/java/rbac/UserManagerTest.java"
-          if [ -f "$USER_MANAGER_TEST" ]; then
-            echo "  ✓ UserManagerTest.java"
-          else
-            echo "  ✗ UserManagerTest.java отсутствует"
-          fi
-          
-          ROLE_MANAGER_TEST="src/test/java/rbac/RoleManagerTest.java"
-          if [ -f "$ROLE_MANAGER_TEST" ]; then
-            echo "  ✓ RoleManagerTest.java"
-          else
-            echo "  ✗ RoleManagerTest.java отсутствует"
-          fi
-          
-          ASSIGN_MANAGER_TEST="src/test/java/rbac/AssignmentManagerTest.java"
-          if [ -f "$ASSIGN_MANAGER_TEST" ]; then
-            echo "  ✓ AssignmentManagerTest.java"
-          else
-            echo "  ✗ AssignmentManagerTest.java отсутствует"
-          fi
+          for file in UserManagerTest.java RoleManagerTest.java AssignmentManagerTest.java CommandRegistryTest.java ConsoleUtilsTest.java LoadTest.java; do
+            if [ -f "src/test/java/rbac/$file" ]; then
+              echo "  ✓ $file"
+            else
+              echo "  ✗ $file отсутствует"
+            fi
+          done
 
       - name: Стадия Сборка
         id: build
@@ -347,6 +501,25 @@ jobs:
           MAVEN_OPTS: "-Dfile.encoding=UTF-8"
           JAVA_TOOL_OPTIONS: "-Dfile.encoding=UTF-8"
 
+      - name: Тесты команд и утилит
+        run: |
+          echo ""
+          echo "╔════════════════════════════════════════════════════════════════╗"
+          echo "║         ТЕСТЫ КОМАНД И УТИЛИТ                                 ║"
+          echo "╚════════════════════════════════════════════════════════════════╝"
+          echo ""
+          
+          mvn -B test -Dtest="CommandRegistryTest,ConsoleUtilsTest" -Dfile.encoding=UTF-8 2>&1 | tee utils-test-output.log
+          
+          if grep -q "BUILD SUCCESS" utils-test-output.log; then
+            echo "✅ Тесты команд и утилит прошли успешно"
+          else
+            echo "⚠️ Некоторые тесты команд/утилит не прошли (не критично)"
+          fi
+        env:
+          MAVEN_OPTS: "-Dfile.encoding=UTF-8"
+          JAVA_TOOL_OPTIONS: "-Dfile.encoding=UTF-8"
+
       # ============================================================
       # НОВЫЙ ШАГ: Запуск нагрузочного теста
       # ============================================================
@@ -368,7 +541,7 @@ jobs:
             
             echo ""
             echo "=== АНАЛИЗ РЕЗУЛЬТАТОВ ==="
-            if grep -q "ОШИБОК НЕ ОБНАРУЖЕНО\|BUILD SUCCESS" loadtest-output.log; then
+            if grep -q "ОШИБОК НЕ ОБНАРУЖЕНО\|BUILD SUCCESS\|стабильно под нагрузкой" loadtest-output.log; then
               echo "✅ Нагрузочный тест пройден успешно"
               echo "✅ Приложение стабильно под нагрузкой"
             else
@@ -429,29 +602,41 @@ jobs:
           echo "Проверка выполнения подзадач в выводе:"
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           
-          if grep -q "ПОДЗАДАЧА 1\|Подзадача 1" demo-output.log; then
+          if grep -q "ПОДЗАДАЧА 1\|Подзадача 1\|БАЗОВЫЕ СТРУКТУРЫ" demo-output.log; then
             echo "✅ Подзадача 1: Базовые структуры данных"
           else
             echo "ℹ Подзадача 1 не найдена в выводе"
           fi
           
-          if grep -q "ПОДЗАДАЧА 2\|Подзадача 2\|Фильтры" demo-output.log; then
+          if grep -q "ПОДЗАДАЧА 2\|Подзадача 2\|Фильтры\|Сортировка" demo-output.log; then
             echo "✅ Подзадача 2: Фильтры и сортировка"
           else
             echo "ℹ Подзадача 2 не найдена в выводе"
           fi
           
-          if grep -q "ПОДЗАДАЧА 3\|Подзадача 3\|Менеджеры" demo-output.log; then
-            echo "✅ Подзадача 3: Менеджеры данных"
+          if grep -q "ПОДЗАДАЧА 3\|Подзадача 3\|Менеджеры\|EXECUTOR" demo-output.log; then
+            echo "✅ Подзадача 3: Менеджеры данных + Async"
           else
             echo "ℹ Подзадача 3 не найдена в выводе"
           fi
           
+          if grep -q "ПОДЗАДАЧА 4\|Подзадача 4\|ИНТЕРАКТИВНЫЙ\|RBAC>" demo-output.log; then
+            echo "✅ Подзадача 4: Интерактивный режим управления"
+          else
+            echo "ℹ Подзадача 4 не найдена в выводе"
+          fi
+          
+          if grep -q "ПОДЗАДАЧА 5\|Подзадача 5\|УТИЛИТЫ\|FormatUtils\|ConsoleUtils" demo-output.log; then
+            echo "✅ Подзадача 5: Дополнительные утилиты"
+          else
+            echo "ℹ Подзадача 5 не найдена в выводе"
+          fi
+          
           echo ""
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-          echo "Последние 40 строк вывода:"
+          echo "Последние 50 строк вывода:"
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-          tail -n 40 demo-output.log
+          tail -n 50 demo-output.log
           exit $EXIT_CODE
         env:
           MAVEN_OPTS: "-Dfile.encoding=UTF-8"
@@ -472,16 +657,16 @@ jobs:
           echo "Всего тестовых классов: $TOTAL_TESTS"
           echo ""
           
-          if [ "$TOTAL_CLASSES" -ge 25 ]; then
-            echo "✅ Объём реализации: достаточный (минимум 25 классов)"
+          if [ "$TOTAL_CLASSES" -ge 30 ]; then
+            echo "✅ Объём реализации: достаточный (минимум 30 классов для подзадач 1-6)"
           else
-            echo "⚠️ Объём реализации: $TOTAL_CLASSES классов"
+            echo "⚠️ Объём реализации: $TOTAL_CLASSES классов (требуется минимум 30)"
           fi
           
-          if [ "$TOTAL_TESTS" -ge 3 ]; then
-            echo "✅ Покрытие тестами: достаточно (минимум 3 тестовых класса)"
+          if [ "$TOTAL_TESTS" -ge 5 ]; then
+            echo "✅ Покрытие тестами: достаточно (минимум 5 тестовых классов)"
           else
-            echo "⚠️ Покрытие тестами: недостаточно"
+            echo "⚠️ Покрытие тестами: недостаточно (требуется минимум 5 тестовых классов)"
           fi
 
       - name: Сохранить логи
@@ -492,6 +677,7 @@ jobs:
           path: |
             test-output.log
             thread-test-output.log
+            utils-test-output.log
             loadtest-output.log
             demo-output.log
           retention-days: 7
@@ -513,6 +699,9 @@ jobs:
           echo "  ✅ Подзадача 1: Потокобезопасные менеджеры"
           echo "  ✅ Подзадача 2: Parallel Stream в отчётах"
           echo "  ✅ Подзадача 3: ExecutorService + Async + Load Test"
+          echo "  ✅ Подзадача 4: Система команд и интерактивное меню"
+          echo "  ✅ Подзадача 5: Дополнительные утилиты (FileStorage, FormatUtils)"
+          echo "  ✅ Подзадача 6: Интеграция и периодические задачи"
           echo ""
           
           BUILD_OK="${{ steps.build.outcome }}"

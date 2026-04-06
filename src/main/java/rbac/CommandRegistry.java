@@ -2,10 +2,11 @@ package rbac;
 
 import java.util.Scanner;
 
-
 public class CommandRegistry {
 
     public static void registerAllCommands(CommandParser parser) {
+        // ==================== ПОЛЬЗОВАТЕЛИ ====================
+
         // user-list
         parser.registerCommand("user-list", "Вывести список всех пользователей",
                 (scanner, system) -> {
@@ -67,6 +68,8 @@ public class CommandRegistry {
                         }
                     }
                 });
+
+        // ==================== РОЛИ ====================
 
         // role-list
         parser.registerCommand("role-list", "Вывести список всех ролей",
@@ -137,9 +140,68 @@ public class CommandRegistry {
                     }
                 });
 
+        // ==================== СТАТИСТИКА И ОТЧЁТЫ ====================
+
         // stats
         parser.registerCommand("stats", "Показать статистику системы",
                 (scanner, system) -> System.out.println(system.generateStatistics()));
+
+        // report-users-async (Подзадача 3)
+        parser.registerCommand("report-users-async", "Асинхронная генерация отчёта по пользователям",
+                (scanner, system) -> {
+                    System.out.println("⏳ Генерация отчёта в фоне...");
+                    try {
+                        String report = system.reportUsersAsync().join();
+                        System.out.println(report);
+                    } catch (Exception e) {
+                        System.out.println("✗ Ошибка генерации отчёта: " + e.getMessage());
+                    }
+                });
+
+        // save-async (Подзадача 3)
+        parser.registerCommand("save-async", "Асинхронное сохранение данных в файл",
+                (scanner, system) -> {
+                    System.out.print("Имя файла [rbac-export.txt]: ");
+                    String filename = scanner.nextLine().trim();
+                    if (filename.isEmpty()) filename = "rbac-export.txt";
+
+                    System.out.println("⏳ Сохранение в фоне...");
+                    try {
+                        system.saveAsync(filename).join();
+                        System.out.println("✓ Сохранение завершено: " + filename);
+                    } catch (Exception e) {
+                        System.out.println("✗ Ошибка сохранения: " + e.getMessage());
+                    }
+                });
+
+        // ==================== РАБОТА С ФАЙЛАМИ ====================
+
+        // file-save
+        parser.registerCommand("file-save", "Сохранить статистику в файл (синхронно)",
+                (scanner, system) -> {
+                    System.out.print("Имя файла [rbac-stats.txt]: ");
+                    String filename = scanner.nextLine().trim();
+                    if (filename.isEmpty()) filename = "rbac-stats.txt";
+                    System.out.println(FileStorage.saveStatistics(system, filename));
+                });
+
+        // file-load
+        parser.registerCommand("file-load", "Загрузить статистику из файла",
+                (scanner, system) -> {
+                    System.out.print("Имя файла: ");
+                    String filename = scanner.nextLine().trim();
+                    System.out.println(FileStorage.loadStatistics(filename));
+                });
+
+        // backup
+        parser.registerCommand("backup", "Создать резервную копию файла",
+                (scanner, system) -> {
+                    System.out.print("Имя файла для копирования: ");
+                    String filename = scanner.nextLine().trim();
+                    System.out.println(FileStorage.createBackup(filename));
+                });
+
+        // ==================== СИСТЕМНЫЕ КОМАНДЫ ====================
 
         // help
         parser.registerCommand("help", "Вывести справку по командам",
