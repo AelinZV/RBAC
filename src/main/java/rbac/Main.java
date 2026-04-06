@@ -12,6 +12,8 @@ import java.util.stream.Collectors;
  * 3. Менеджеры данных
  * 4. Система команд и меню
  * 5. Дополнительные утилиты
+ * 6. Интеграция
+ * 7. Периодические задачи (ФИНАЛ)
  */
 public class Main {
     // Форматер для создания метаданных с кастомной датой
@@ -424,10 +426,11 @@ public class Main {
         System.out.println(table.substring(0, Math.min(150, table.length())) + "...");
     }
 
-    // ==================== ПОДЗАДАЧА 4: ИНТЕРАКТИВНЫЙ РЕЖИМ ====================
+    // ==================== ПОДЗАДАЧА 4 + 7: ИНТЕРАКТИВНЫЙ РЕЖИМ + ПЕРИОДИЧЕСКИЕ ЗАДАЧИ ====================
     private static void startInteractiveMode(Scanner scanner) {
         System.out.println("\n╔════════════════════════════════════════════════════════════════╗");
-        System.out.println("║    ИНТЕРАКТИВНЫЙ РЕЖИМ УПРАВЛЕНИЯ СИСТЕМОЙ RBAC (ПОДЗАДАЧА 4) ║");
+        System.out.println("║    ИНТЕРАКТИВНЫЙ РЕЖИМ УПРАВЛЕНИЯ СИСТЕМОЙ RBAC               ║");
+        System.out.println("║    (ПОДЗАДАЧИ 4, 6, 7: Меню + Интеграция + Периодические)     ║");
         System.out.println("╚════════════════════════════════════════════════════════════════╝\n");
 
         // Создание системы
@@ -436,11 +439,15 @@ public class Main {
         // Инициализация с начальными данными
         system.initialize();
 
-        // ✏️ ЗАПУСК ПЕРИОДИЧЕСКИХ ЗАДАЧ (Подзадача 3, пункт 6)
+        // ✏️ ✅ ПОДЗАДАЧА 7: ЗАПУСК ПЕРИОДИЧЕСКИХ ЗАДАЧ
         system.startPeriodicTasks(30);
         System.out.println("✓ Периодические задачи запущены (интервал: 30 сек)");
-        System.out.println("  → Автоматическая деактивация истёкших назначений");
-        System.out.println("  → Логирование статистики в AuditLog\n");
+        System.out.println("  → Автоматическая деактивация истёкших назначений (deactivateExpired)");
+        System.out.println("  → Логирование статистики в AuditLog (STATISTICS)");
+        System.out.println("  → Логирование деактивированных назначений (EXPIRED_ASSIGNMENTS)");
+        System.out.println("  → Короткие критические секции для минимизации блокировок");
+        System.out.println("  → Команда 'periodic-status' для ручного просмотра статуса");
+        System.out.println();
 
         // Создание парсера команд
         CommandParser parser = new CommandParser();
@@ -469,7 +476,7 @@ public class Main {
                     System.out.print("Подтвердите выход (да/нет): ");
                     String confirmation = scanner.nextLine().trim();
                     if (confirmation.equalsIgnoreCase("да") || confirmation.equalsIgnoreCase("yes") || confirmation.equalsIgnoreCase("y")) {
-                        // ✏️ Остановка периодических задач и корректное завершение
+                        // ✅ ПОДЗАДАЧА 7: Остановка периодических задач и корректное завершение
                         system.stopPeriodicTasks();
                         system.shutdown();
                         System.out.println("\nВыход из системы. До свидания!");
