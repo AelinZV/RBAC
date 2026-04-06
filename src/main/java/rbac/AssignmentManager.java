@@ -142,32 +142,32 @@ public class AssignmentManager {
     /**
      * ✅ Подзадача 7: Деактивация истёкших временных назначений.
      * Оптимизировано для коротких критических секций:
-     * 1. Первый проход: сбор ID для удаления (минимальная блокировка)
-     * 2. Второй проход: удаление (быстрая операция)
+     * 1. Сбор ID для удаления в одной критической секции
+     * 2. Удаление найденных записей
      *
-     * Использует метод isExpired() из TemporaryAssignment через рефлексию.
+     * Исправлено: убрана рефлексия и логическая ошибка в условии.
      */
     public int deactivateExpired() {
         lock.writeLock().lock();
         try {
-            // 🔹 Короткая критическая секция: только сбор и удаление
             List<String> toRemove = new ArrayList<>();
 
-            // 🔹 Первый проход: сбор ID истёкших назначений
+            // 🔹 Один проход: сбор и проверка в короткой критической секции
             for (Map.Entry<String, RoleAssignment> entry : assignments.entrySet()) {
                 RoleAssignment a = entry.getValue();
 
-                // Быстрая проверка типа
-                if (!isTemporaryAssignment(a)) continue;
-
-                // Проверка истечения через isExpired()
-                Boolean expired = callIsExpired(a);
-                if (Boolean.TRUE.equals(expired) && a.isActive()) {
-                    toRemove.add(entry.getKey());
+                // 🔹 Прямая проверка типа вместо рефлексии
+                if (a instanceof TemporaryAssignment) {
+                    TemporaryAssignment ta = (TemporaryAssignment) a;
+                    // 🔹 Исправлено: isExpired() уже означает !isActive(),
+                    // поэтому проверка && a.isActive() была логической ошибкой
+                    if (ta.isExpired()) {
+                        toRemove.add(entry.getKey());
+                    }
                 }
             }
 
-            // 🔹 Второй проход: удаление (минимальное время блокировки)
+            // 🔹 Удаление найденных просроченных назначений
             for (String id : toRemove) {
                 RoleAssignment removed = assignments.remove(id);
                 if (removed != null) {
@@ -186,27 +186,6 @@ public class AssignmentManager {
         }
     }
 
-    /**
-     * Проверка, является ли назначение временным.
-     */
-    private boolean isTemporaryAssignment(RoleAssignment a) {
-        String name = a.getClass().getSimpleName();
-        return name.contains("Temporary") || a.getClass().getName().contains("TemporaryAssignment");
-    }
-
-    /**
-     * Вызов метода isExpired() через рефлексию.
-     */
-    private Boolean callIsExpired(RoleAssignment a) {
-        try {
-            java.lang.reflect.Method method = a.getClass().getMethod("isExpired");
-            Object result = method.invoke(a);
-            return result instanceof Boolean ? (Boolean) result : null;
-        } catch (Exception e) {
-            return null;
-        }
-    }
-
     public void revokeAssignment(String assignmentId) {
         lock.writeLock().lock();
         try {
@@ -220,7 +199,17 @@ public class AssignmentManager {
         }
     }
 
-    public void extendTemporaryAssignment(String assignmentId, String newExpiresAt) {}
+    public void extendTemporaryAssignment(String assignmentId, String newExpiresAt) {
+        lock.writeLock().lock();
+        try {
+            RoleAssignment assignment = assignments.get(assignmentId);
+            if (assignment instanceof TemporaryAssignment) {
+                ((TemporaryAssignment) assignment).extend(newExpiresAt);
+            }
+        } finally {
+            lock.writeLock().unlock();
+        }
+    }
 
     public boolean remove(RoleAssignment assignment) {
         lock.writeLock().lock();
@@ -238,7 +227,14 @@ public class AssignmentManager {
         }
     }
 
-    public int count() { return assignments.size(); }
+    public int count() {
+        lock.readLock().lock();
+        try {
+            return assignments.size();
+        } finally {
+            lock.readLock().unlock();
+        }
+    }
 
     public void clear() {
         lock.writeLock().lock();
