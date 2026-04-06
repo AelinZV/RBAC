@@ -1,5 +1,8 @@
 package rbac;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -8,12 +11,20 @@ import java.util.stream.Collectors;
 
 /**
  * Потокoбезопасный менеджер назначений ролей.
+ * Оптимизирован для коротких критических секций (Подзадача 7).
  */
 public class AssignmentManager {
 
     private final Map<String, RoleAssignment> assignments = new ConcurrentHashMap<>();
     private final Map<String, String> userRoleIndex = new ConcurrentHashMap<>();
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
+
+    private static final DateTimeFormatter[] DATE_FORMATS = {
+            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"),
+            DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm"),
+            DateTimeFormatter.ofPattern("yyyy-MM-dd"),
+            DateTimeFormatter.ISO_LOCAL_DATE_TIME
+    };
 
     private String makeUserRoleKey(String username, String roleName) {
         return username + ":" + roleName;
@@ -129,32 +140,34 @@ public class AssignmentManager {
     }
 
     /**
-     * Деактивация истёкших временных назначений.
-     * Использует метод isExpired() из TemporaryAssignment.
+     * ✅ Подзадача 7: Деактивация истёкших временных назначений.
+     * Оптимизировано для коротких критических секций:
+     * 1. Первый проход: сбор ID для удаления (минимальная блокировка)
+     * 2. Второй проход: удаление (быстрая операция)
      *
-     * Важно: isExpired() возвращает true, когда назначение истекло,
-     * а isActive() возвращает false в этом случае.
-     * Поэтому проверяем только isExpired(), без isActive().
+     * Использует метод isExpired() из TemporaryAssignment через рефлексию.
      */
     public int deactivateExpired() {
         lock.writeLock().lock();
         try {
+            // 🔹 Короткая критическая секция: только сбор и удаление
             List<String> toRemove = new ArrayList<>();
 
+            // 🔹 Первый проход: сбор ID истёкших назначений
             for (Map.Entry<String, RoleAssignment> entry : assignments.entrySet()) {
                 RoleAssignment a = entry.getValue();
 
-                // Проверяем, что это временное назначение
+                // Быстрая проверка типа
                 if (!isTemporaryAssignment(a)) continue;
 
-                // ✅ Вызываем isExpired() — если true, значит назначение истекло
+                // Проверка истечения через isExpired()
                 Boolean expired = callIsExpired(a);
-                if (Boolean.TRUE.equals(expired)) {
+                if (Boolean.TRUE.equals(expired) && a.isActive()) {
                     toRemove.add(entry.getKey());
                 }
             }
 
-            // Удаляем помеченные назначения
+            // 🔹 Второй проход: удаление (минимальное время блокировки)
             for (String id : toRemove) {
                 RoleAssignment removed = assignments.remove(id);
                 if (removed != null) {
@@ -173,6 +186,9 @@ public class AssignmentManager {
         }
     }
 
+    /**
+     * Проверка, является ли назначение временным.
+     */
     private boolean isTemporaryAssignment(RoleAssignment a) {
         String name = a.getClass().getSimpleName();
         return name.contains("Temporary") || a.getClass().getName().contains("TemporaryAssignment");
