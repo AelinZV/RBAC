@@ -436,6 +436,12 @@ public class Main {
         // Инициализация с начальными данными
         system.initialize();
 
+        // ✏️ ЗАПУСК ПЕРИОДИЧЕСКИХ ЗАДАЧ (Подзадача 3, пункт 6)
+        system.startPeriodicTasks(30);
+        System.out.println("✓ Периодические задачи запущены (интервал: 30 сек)");
+        System.out.println("  → Автоматическая деактивация истёкших назначений");
+        System.out.println("  → Логирование статистики в AuditLog\n");
+
         // Создание парсера команд
         CommandParser parser = new CommandParser();
 
@@ -463,6 +469,9 @@ public class Main {
                     System.out.print("Подтвердите выход (да/нет): ");
                     String confirmation = scanner.nextLine().trim();
                     if (confirmation.equalsIgnoreCase("да") || confirmation.equalsIgnoreCase("yes") || confirmation.equalsIgnoreCase("y")) {
+                        // ✏️ Остановка периодических задач и корректное завершение
+                        system.stopPeriodicTasks();
+                        system.shutdown();
                         System.out.println("\nВыход из системы. До свидания!");
                         break;
                     }
