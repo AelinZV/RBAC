@@ -201,6 +201,28 @@ public class CommandRegistry {
                     System.out.println(FileStorage.createBackup(filename));
                 });
 
+        // ==================== ПЕРИОДИЧЕСКИЕ ЗАДАЧИ (Подзадача 7) ====================
+
+        // periodic-status
+        parser.registerCommand("periodic-status", "Показать статус периодических задач",
+                (scanner, system) -> {
+                    System.out.println("╔════════════════════════════════════════════════════════════════╗");
+                    System.out.println("║                    СТАТУС ПЕРИОДИЧЕСКИХ ЗАДАЧ                 ║");
+                    System.out.println("╚════════════════════════════════════════════════════════════════╝\n");
+
+                    System.out.println("Интервал: 30 секунд");
+                    System.out.println("Задачи:");
+                    System.out.println("  • Автоматическая деактивация истёкших временных назначений");
+                    System.out.println("  • Логирование статистики в AuditLog (STATISTICS)");
+                    System.out.println("  • Логирование деактивированных назначений (EXPIRED_ASSIGNMENTS)");
+                    System.out.println("\nОптимизация:");
+                    System.out.println("  • Короткие критические секции в deactivateExpired()");
+                    System.out.println("  • Минимальное время удержания блокировок");
+                    System.out.println("  • Параллельная обработка через ConcurrentHashMap");
+                    System.out.println("\nПоследняя статистика:");
+                    System.out.println(system.generateStatistics());
+                });
+
         // ==================== СИСТЕМНЫЕ КОМАНДЫ ====================
 
         // help

@@ -53,6 +53,9 @@ public class CommandParser {
         System.out.println("  file-load        Загрузить статистику из файла");
         System.out.println("  backup           Создать резервную копию файла");
 
+        System.out.println("\n=== Периодические задачи ===");
+        System.out.println("  periodic-status  Показать статус периодических задач");
+
         System.out.println("\n=== Системные ===");
         System.out.println("  help             Вывести эту справку");
         System.out.println("  exit             Выход из системы");
